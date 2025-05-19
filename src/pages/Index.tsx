@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -201,6 +200,9 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 p-4 pt-8 md:pt-12">
+      <h1 className="text-4xl font-extrabold text-center mb-8 text-gray-800 dark:text-gray-100">
+        Ultra Race Time Predictor
+      </h1>
       <div className="w-full max-w-xs sm:max-w-sm md:max-w-md mb-6">
         <ToggleGroup 
           type="single" 
@@ -240,11 +242,9 @@ const Index = () => {
           )}
           {!isLoadingRaces && !isErrorRaces && races.length > 0 && (
             <Card className="w-full max-w-2xl shadow-2xl bg-white border-gray-300 text-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
-              <CardHeader className="text-center">
-                <CardTitle className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-                  Race Time Predictor
-                </CardTitle>
-                <CardDescription className="text-gray-600 dark:text-gray-400">
+              <CardHeader className="text-center pb-4"> {/* Adjusted padding */}
+                {/* CardTitle removed from here */}
+                <CardDescription className="text-gray-600 dark:text-gray-400 text-base"> {/* Adjusted text size */}
                   Predict your finish time by comparing the winning times in the races. Contains most ultra races in Europe.
                 </CardDescription>
               </CardHeader>
