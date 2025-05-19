@@ -1,19 +1,13 @@
-
-export interface SourceRaceEntryRatios { // Renamed
-  race: string;
+export interface SourceRaceEntryRatios {
+  id: string; // Unique identifier for the entry
+  raceId: string | null; // Name of the race (acts as ID for ratios data)
   time: string;
 }
 
-export interface PredictionResultDisplayRatios { // Renamed
-  time: string;
-  min: string;
-  max: string;
-}
-
-// This matches the structure expected by PredictionResultRatios component
-export interface PredictionResultUIRatios {
-  avg: PredictionResultDisplayRatios | string; // Can be an error string
-  median?: PredictionResultDisplayRatios;
-  winner?: PredictionResultDisplayRatios;
-  sourceRacesCount: number; // Added to match component prop
+export interface PredictionResultDataRatios {
+  avg: string;
+  median: string;
+  winner: string; // This seems to be specific to the ratios model, perhaps a typo or legacy? Or winner time of target race?
+                 // Let's assume it's part of the prediction specific to this model.
+  sourceRacesCount: number;
 }

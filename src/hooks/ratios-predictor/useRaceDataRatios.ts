@@ -1,70 +1,59 @@
 
-import { useState, useEffect } from 'react';
-import { fetchRaceDataRatios, getRaceNamesRatios } from '@/services/ratiosPredictorService'; // Updated import
+import { useState, useEffect, useCallback } from 'react';
+import { fetchRaceNames } from '@/services/ratiosPredictorService';
+import { SourceRaceEntryRatios } from '@/types/ratiosPredictor';
 import { toast } from 'sonner';
-import { SourceRaceEntryRatios } from '@/types/ratiosPredictor'; // Updated import
 
 export function useRaceDataRatios() {
   const [raceNames, setRaceNames] = useState<string[]>([]);
-  const [sourceRaces, setSourceRaces] = useState<SourceRaceEntryRatios[]>([{ race: "", time: "" }]);
-  const [targetRace, setTargetRace] = useState<string>("");
+  const [sourceRaces, setSourceRaces] = useState<SourceRaceEntryRatios[]>([
+    { id: Date.now().toString(), raceId: null, time: '' }
+  ]);
+  const [targetRace, setTargetRace] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  
+  const [error, setError] = useState<Error | null>(null);
+
   useEffect(() => {
-    const loadData = async () => {
+    const loadRaceNames = async () => {
       try {
         setIsLoading(true);
-        await fetchRaceDataRatios(); // Updated function call
-        const names = getRaceNamesRatios(); // Updated function call
-        
+        const names = await fetchRaceNames();
         setRaceNames(names);
-        
-        if (names.length > 0) {
-          // Automatically select first race if available, or leave empty
-          setSourceRaces([{ race: names[0] || "", time: "" }]);
-          setTargetRace(names[0] || "");
-        } else {
-          setSourceRaces([{ race: "", time: "" }]);
-          setTargetRace("");
-        }
-        
         setError(null);
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to load race data for ratios predictor.";
-        setError(errorMessage);
-        toast.error(errorMessage);
+        console.error("Failed to fetch race names for Ratios Predictor:", err);
+        setError(err instanceof Error ? err : new Error('Failed to load race names'));
+        toast.error("Could not load race data for Ratios Model.");
       } finally {
         setIsLoading(false);
       }
     };
-    
-    loadData();
+    loadRaceNames();
   }, []);
-  
-  const addSourceRace = () => {
-    if (raceNames.length === 0) {
-        setSourceRaces([...sourceRaces, { race: "", time: "" }]);
-        return;
-    }
-    setSourceRaces([...sourceRaces, { race: raceNames[0] || "", time: "" }]);
-  };
-  
-  const removeSourceRace = (index: number) => {
-    if (sourceRaces.length === 1) {
-      return;
-    }
-    const updatedRaces = [...sourceRaces];
-    updatedRaces.splice(index, 1);
-    setSourceRaces(updatedRaces);
-  };
-  
-  const updateSourceRace = (index: number, field: 'race' | 'time', value: string) => {
-    const updatedRaces = [...sourceRaces];
-    updatedRaces[index] = { ...updatedRaces[index], [field]: value };
-    setSourceRaces(updatedRaces);
-  };
-  
+
+  const addSourceRace = useCallback(() => {
+    setSourceRaces(prev => [...prev, { id: Date.now().toString(), raceId: null, time: '' }]);
+  }, []);
+
+  const removeSourceRace = useCallback((idToRemove: string) => {
+    setSourceRaces(prev => {
+      const updatedRaces = prev.filter(race => race.id !== idToRemove);
+      // Ensure there's always at least one entry form if all are removed
+      if (updatedRaces.length === 0) {
+        return [{ id: Date.now().toString(), raceId: null, time: '' }];
+      }
+      return updatedRaces;
+    });
+  }, []);
+
+  const updateSourceRace = useCallback((idToUpdate: string, field: 'raceId' | 'time', value: string) => {
+    setSourceRaces(prev =>
+      prev.map(race =>
+        race.id === idToUpdate ? { ...race, [field]: value } : race
+      )
+    );
+  }, []);
+
   return {
     raceNames,
     sourceRaces,
@@ -74,6 +63,6 @@ export function useRaceDataRatios() {
     setTargetRace,
     addSourceRace,
     removeSourceRace,
-    updateSourceRace
+    updateSourceRace,
   };
 }
