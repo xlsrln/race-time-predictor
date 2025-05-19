@@ -93,7 +93,7 @@ interface PastPerformanceEntry {
 }
 
 const Index = () => {
-  const [activeMode, setActiveMode] = useState<'csv' | 'ratios'>('csv');
+  const [activeMode, setActiveMode] = useState<'csv' | 'ratios'>('ratios'); // Default to 'ratios'
 
   // State and logic for CSV Predictor mode
   const { data: races = [], isLoading: isLoadingRaces, isError: isErrorRaces, error: errorRaces } = useQuery<Race[], Error>({
@@ -338,21 +338,22 @@ const Index = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">Your Past Performances</h3> {/* Light theme */}
+                  <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-3">Your Past Performances</h3> {/* Light theme */}
                   {pastPerformances.map((perf, index) => (
                     <div key={perf.id} className="space-y-3 p-3 mb-3 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700/50 relative"> {/* Light theme */}
-                      <div className="flex justify-between items-center mb-2">
+                      <div className="flex justify-between items-center mb-1">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Past Race #{index + 1}
+                          Source Race #{index + 1}
                         </label>
-                        {pastPerformances.length > 1 && (
+                        {pastPerformances.length > 0 && ( // Show remove if any items, to allow removing the last one and re-adding
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size="sm" // Adjusted from icon to sm for better click area with p-1
                             onClick={() => removePastPerformanceEntry(perf.id)}
-                            className="text-red-500 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-500/20 p-1" // Light theme
+                            className="text-red-500 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-500/20 p-1 h-auto w-auto"
+                            aria-label={`Remove race ${index + 1}`}
                           >
-                            <X size={18} />
+                            <X size={16} /> {/* Standardized icon */}
                           </Button>
                         )}
                       </div>
