@@ -10,7 +10,7 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 p-4 pt-8 md:pt-12">
       <h1 className="text-4xl font-extrabold text-center mb-8 text-gray-800 dark:text-gray-100">
-        Ultra Race Time Predictor
+        Ultra Race Time Calculator
       </h1>
       
       {activeMode === 'csv' && <CsvPredictorContainer />}
