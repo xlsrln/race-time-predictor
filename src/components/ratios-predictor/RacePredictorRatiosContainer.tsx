@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardDescription, CardFooter } from "@/components/ui/card";
@@ -62,7 +63,7 @@ const RacePredictorRatiosContainer: React.FC = () => {
               raceSelectorItems={raceSelectorItemsForSource} // Changed from raceNames
               updateSourceRace={updateSourceRace}
               addSourceRace={addSourceRace}
-              removeSourceRaces={removeSourceRace} // Corrected prop name to match component
+              removeSourceRace={removeSourceRace} // Fixed from removeSourceRaces to match component prop name
             />
             
             <div className="flex items-center justify-center my-4">

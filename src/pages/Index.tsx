@@ -245,7 +245,7 @@ const Index = () => {
                   Race Time Predictor
                 </CardTitle>
                 <CardDescription className="text-gray-600 dark:text-gray-400">
-                  Estimate your time for a target race based on past performances and winner's times.
+                  Predict your finish time by comparing the winning times in the races. Contains most ultra races in Europe.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -303,7 +303,7 @@ const Index = () => {
                     Target Race
                   </label>
                   <RaceSelector
-                    selectedValue={selectedTargetRace ? { id: selectedTargetRace.id, name: selectedTargetRace.name } : undefined} // Corrected
+                    selectedValue={selectedTargetRace ? { id: selectedTargetRace.id, name: selectedTargetRace.name } : undefined}
                     onSelectValue={setSelectedTargetRaceId}
                     placeholder="Select your target race"
                     items={raceSelectorItemsCsv}
@@ -345,6 +345,11 @@ const Index = () => {
                   )}
                 </CardFooter>
               )}
+              
+              <CardFooter className="text-xs text-center text-muted-foreground dark:text-gray-500 flex flex-col justify-center gap-2 py-4 border-t border-gray-200 dark:border-gray-700">
+                <p>Conditions and routes can vary. Use as an indication only.</p>
+                <p className="pt-2 text-xs font-medium">Winner Time Model by Axel Sarlin</p>
+              </CardFooter>
             </Card>
           )}
         </>
@@ -358,4 +363,3 @@ const Index = () => {
 };
 
 export default Index;
-
