@@ -1,11 +1,11 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { PredictionResultDataRatios } from '@/types/ratiosPredictor'; // Updated import
+import { PredictionResultDataRatios } from '@/types/ratiosPredictor';
 
 interface PredictionResultRatiosProps {
   prediction: PredictionResultDataRatios | null;
-  targetRaceName?: string; // Optional: if you want to display the target race name here
+  targetRaceName?: string;
 }
 
 const PredictionResultRatios: React.FC<PredictionResultRatiosProps> = ({ prediction, targetRaceName }) => {
@@ -23,21 +23,23 @@ const PredictionResultRatios: React.FC<PredictionResultRatiosProps> = ({ predict
           {targetRaceName && <span className="text-base font-normal text-gray-600 dark:text-gray-300"> for {targetRaceName}</span>}
         </CardTitle>
         <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
-          Based on {sourceRacesCount} source race(s).
+          {sourceRacesCount > 0 
+            ? `Based on ${sourceRacesCount} source race(s) contributing to the prediction.`
+            : "No source races contributed to a valid prediction."}
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+      <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center pt-4">
         <div>
-          <p className="text-xs uppercase text-gray-500 dark:text-gray-400 tracking-wider">Average Time</p>
-          <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{avg}</p>
+          <p className="text-xs uppercase text-gray-500 dark:text-gray-400 tracking-wider">Prediction</p>
+          <p className={`text-2xl font-bold ${avg === "No runners in common" || avg === "N/A" ? "text-gray-500 dark:text-gray-400 text-lg" : "text-indigo-600 dark:text-indigo-400"}`}>{avg}</p>
         </div>
         <div>
-          <p className="text-xs uppercase text-gray-500 dark:text-gray-400 tracking-wider">Median Time</p>
-          <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{median}</p>
+          <p className="text-xs uppercase text-gray-500 dark:text-gray-400 tracking-wider">Prediction based on median times</p>
+          <p className={`text-2xl font-bold ${median === "N/A" ? "text-gray-500 dark:text-gray-400 text-lg" : "text-indigo-600 dark:text-indigo-400"}`}>{median}</p>
         </div>
         <div>
-          <p className="text-xs uppercase text-gray-500 dark:text-gray-400 tracking-wider">Predicted Winner Time</p>
-          <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{winner}</p>
+          <p className="text-xs uppercase text-gray-500 dark:text-gray-400 tracking-wider">Prediction based on winner times</p>
+          <p className={`text-2xl font-bold ${winner === "N/A" ? "text-gray-500 dark:text-gray-400 text-lg" : "text-indigo-600 dark:text-indigo-400"}`}>{winner}</p>
         </div>
       </CardContent>
     </Card>
