@@ -30,7 +30,7 @@ const CsvPredictorContainer: React.FC = () => {
 
   const handlePredictTime = () => {
     if (pastPerformances.length === 0 || pastPerformances.every(p => !p.raceId || !p.timeInput)) {
-      toast.error("Please add and complete at least one past race performance.");
+      toast.error("Please add and complete at least one past race performance");
       setPredictionResult(null);
       return;
     }
