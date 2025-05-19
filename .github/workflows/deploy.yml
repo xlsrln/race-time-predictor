@@ -1,3 +1,4 @@
+
 name: Deploy to GitHub Pages
 
 on:
@@ -7,9 +8,9 @@ on:
   workflow_dispatch: # Allows manual triggering from the Actions tab
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: read # Needed to checkout the repository
+  pages: write    # Needed to deploy to GitHub Pages
+  id-token: write # Needed for OIDC token authentication
 
 jobs:
   build:
@@ -28,22 +29,29 @@ jobs:
         run: npm ci
 
       - name: Build project
-        # Your vite.config.ts should have base: '/race-time-predictor/'
         run: npm run build 
-        # If your build script in package.json is different, use that.
-        # 'vite build' is common, or you might have 'npm run deploy' which includes the build.
-        # For gh-pages action, we just need the build output in 'dist'.
-        # The script "deploy": "vite build && gh-pages -d dist" in your package.json
-        # is for manual deploys. The action will handle the gh-pages part.
+        env:
+          # If you have any build-time environment variables, define them here
+          # For example, if your vite.config.ts uses import.meta.env.VITE_BASE_URL
+          # VITE_BASE_URL: /${{ github.event.repository.name }}/ # This is usually handled by the 'base' in vite.config.ts
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
+        # No specific configuration needed here if using default settings
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: './dist' # Vite's default output directory
 
+  deploy:
+    needs: build # This job runs after the build job completes
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }} # Sets the deployment URL in the GitHub environment
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        # This action automatically uses the artifact uploaded in the 'build' job
