@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import RacePredictorRatiosContainer from '@/components/ratios-predictor/RacePredictorRatiosContainer';
-import CsvPredictorContainer from '@/components/csv-predictor/CsvPredictorContainer'; // Updated import
+import CsvPredictorContainer from '@/components/csv-predictor/CsvPredictorContainer';
 
 const Index = () => {
   const [activeMode, setActiveMode] = useState<'ratios' | 'csv'>('ratios');
@@ -23,11 +23,11 @@ const Index = () => {
           onValueChange={(value) => { if (value) setActiveMode(value as 'ratios' | 'csv'); }} 
           className="grid grid-cols-2 gap-1 border bg-muted p-1 rounded-md dark:bg-gray-700 dark:border-gray-600"
         >
-          <ToggleGroupItem value="ratios" aria-label="Common Runner Model" className="data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-md dark:data-[state=on]:bg-gray-500 dark:data-[state=on]:text-white">
-            Common Runner Model
+          <ToggleGroupItem value="ratios" aria-label="Runner In Common Predictor" className="data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-md dark:data-[state=on]:bg-gray-500 dark:data-[state=on]:text-white">
+            Runner In Common Predictor
           </ToggleGroupItem>
-          <ToggleGroupItem value="csv" aria-label="Winner Time Model" className="data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-md dark:data-[state=on]:bg-gray-500 dark:data-[state=on]:text-white">
-            Winner Time Model
+          <ToggleGroupItem value="csv" aria-label="Simple Time Predictor" className="data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-md dark:data-[state=on]:bg-gray-500 dark:data-[state=on]:text-white">
+            Simple Time Predictor
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
