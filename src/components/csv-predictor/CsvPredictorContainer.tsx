@@ -122,7 +122,7 @@ const CsvPredictorContainer: React.FC = () => {
 
   return (
     <PredictorLayout
-      pageDescription="Compares winning times in races and multiplies your time by that factor. Contains data for most ultra races in Europe."
+      pageDescription="Compares winning times of both races, and applies that ratio to your time. Contains data for most ultra races in Europe."
       isLoadingInitialData={isLoadingRaces}
       initialDataError={isErrorRaces ? errorRaces : null}
       initialDataLoadingMessage="Loading CSV race data for Winner Time Model..."
