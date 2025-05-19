@@ -2,17 +2,9 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Check, ChevronsUpDown, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Race } from '@/types/race';
-import { timeToSeconds, secondsToHhMmSs, parseCsvDurationToSeconds } from '@/lib/timeUtils';
-import { toast } from "sonner";
-import { useQuery } from '@tanstack/react-query';
-import Papa from 'papaparse';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import RacePredictorRatiosContainer from '@/components/ratios-predictor/RacePredictorRatiosContainer';
+import RaceSelector, { RaceSelectorItem } from '@/components/shared/RaceSelector';
 
 // CSV URL for "CSV Predictor"
 const CSV_URL = 'https://raw.githubusercontent.com/xlsrln/urtp/main/all_eu_wintimes.csv';
@@ -93,7 +85,7 @@ interface PastPerformanceEntry {
 }
 
 const Index = () => {
-  const [activeMode, setActiveMode] = useState<'csv' | 'ratios'>('ratios'); // Default to 'ratios'
+  const [activeMode, setActiveMode] = useState<'ratios' | 'csv'>('ratios'); // Default to 'ratios'
 
   // State and logic for CSV Predictor mode
   const { data: races = [], isLoading: isLoadingRaces, isError: isErrorRaces, error: errorRaces } = useQuery<Race[], Error>({
@@ -108,11 +100,9 @@ const Index = () => {
     { id: Date.now().toString(), raceId: null, timeInput: '' }
   ]);
   const [selectedTargetRaceId, setSelectedTargetRaceId] = useState<string | null>(null);
-  const [predictionResult, setPredictionResult] = useState<{ average: string; min: string; max: string; count: number; } | null>(null); // Added count
-  
-  const [targetRacePopoverOpen, setTargetRacePopoverOpen] = useState(false);
+  const [predictionResult, setPredictionResult] = useState<{ average: string; min: string; max: string; count: number; } | null>(null);
 
-  const selectedTargetRace = useMemo(() => races.find(r => r.id === selectedTargetRaceId), [races, selectedTargetRaceId]);
+  const raceSelectorItemsCsv = useMemo(() => races.map(r => ({ id: r.id, name: r.name })), [races]);
 
   const addPastPerformanceEntry = () => {
     setPastPerformances(prev => [...prev, { id: Date.now().toString(), raceId: null, timeInput: '' }]);
@@ -197,111 +187,21 @@ const Index = () => {
     toast.success("Prediction successful!");
   };
 
-  // Refactored RaceSelector to manage its own popover state
-  const RaceSelector = ({
-    selectedValue,
-    onSelectValue,
-    placeholder,
-    racesData
-  }: {
-    selectedValue: Race | undefined;
-    onSelectValue: (value: string | null) => void;
-    placeholder: string;
-    racesData: Race[];
-  }) => {
-    const [open, setOpen] = React.useState(false);
-    return (
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className="w-full justify-between text-sm md:text-base border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-          >
-            {selectedValue ? selectedValue.name : placeholder}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0 bg-white border-gray-300 dark:bg-gray-800 dark:border-gray-600">
-          <Command>
-            <CommandInput placeholder="Search race..." className="border-gray-300 text-gray-900 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400" />
-            <CommandList>
-              <CommandEmpty className="text-gray-600 dark:text-gray-400">No race found.</CommandEmpty>
-              <CommandGroup>
-                {racesData.map((race) => (
-                  <CommandItem
-                    key={race.id}
-                    value={race.name}
-                    onSelect={() => {
-                      onSelectValue(race.id);
-                      setOpen(false);
-                    }}
-                    className="text-gray-800 hover:bg-gray-100 data-[selected='true']:bg-blue-100 data-[selected=true]:text-blue-700 dark:text-gray-200 dark:hover:bg-gray-700 dark:data-[selected='true']:bg-blue-700 dark:data-[selected=true]:text-blue-100"
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        selectedValue?.id === race.id ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {race.name}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-    );
-  }
-
-  if (isLoadingRaces) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 p-4 text-gray-800"> {/* Light theme */}
-        <p className="text-xl">Loading race data...</p>
-      </div>
-    );
-  }
-
-  if (isErrorRaces) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 p-4 text-gray-800"> {/* Light theme */}
-        <div className="text-center">
-          <p className="text-xl text-red-600">Error loading race data</p> {/* Light theme */}
-          <p className="text-gray-600">{(errorRaces as Error)?.message || 'An unknown error occurred.'}</p> {/* Light theme */}
-          <p className="text-gray-500 mt-2">Please check your internet connection or try again later.</p> {/* Light theme */}
-        </div>
-      </div>
-    );
-  }
-  
-  if (!isLoadingRaces && !isErrorRaces && races.length === 0) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 p-4 text-gray-800"> {/* Light theme */}
-        <div className="text-center">
-          <p className="text-xl">No Race Data Available</p>
-          <p className="text-gray-600">The race data source might be empty, temporarily unavailable, or all data was invalid.</p> {/* Light theme */}
-           <p className="text-gray-500 mt-2">Please try again later or contact support if the issue persists.</p> {/* Light theme */}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 p-4 pt-8 md:pt-12">
       <div className="w-full max-w-xs sm:max-w-sm md:max-w-md mb-6">
         <ToggleGroup 
           type="single" 
           value={activeMode} 
-          onValueChange={(value) => { if (value) setActiveMode(value as 'csv' | 'ratios'); }} 
+          onValueChange={(value) => { if (value) setActiveMode(value as 'ratios' | 'csv'); }} 
           className="grid grid-cols-2 gap-1 border bg-muted p-1 rounded-md dark:bg-gray-700 dark:border-gray-600"
         >
-          <ToggleGroupItem value="csv" aria-label="CSV Based Predictor" className="data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-md dark:data-[state=on]:bg-gray-500 dark:data-[state=on]:text-white">
-            Winner Time Model
-          </ToggleGroupItem>
-          <ToggleGroupItem value="ratios" aria-label="Ratios Based Predictor" className="data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-md dark:data-[state=on]:bg-gray-500 dark:data-[state=on]:text-white">
+          {/* Reordered: Common Runner Model first */}
+          <ToggleGroupItem value="ratios" aria-label="Common Runner Model" className="data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-md dark:data-[state=on]:bg-gray-500 dark:data-[state=on]:text-white">
             Common Runner Model
+          </ToggleGroupItem>
+          <ToggleGroupItem value="csv" aria-label="Winner Time Model" className="data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-md dark:data-[state=on]:bg-gray-500 dark:data-[state=on]:text-white">
+            Winner Time Model
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
@@ -338,40 +238,45 @@ const Index = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-3">Your Past Performances</h3> {/* Light theme */}
-                  {pastPerformances.map((perf, index) => (
-                    <div key={perf.id} className="space-y-3 p-3 mb-3 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700/50 relative"> {/* Light theme */}
-                      <div className="flex justify-between items-center mb-1">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Source Race #{index + 1}
-                        </label>
-                        {pastPerformances.length > 0 && ( // Show remove if any items, to allow removing the last one and re-adding
-                          <Button
-                            variant="ghost"
-                            size="sm" // Adjusted from icon to sm for better click area with p-1
-                            onClick={() => removePastPerformanceEntry(perf.id)}
-                            className="text-red-500 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-500/20 p-1 h-auto w-auto"
-                            aria-label={`Remove race ${index + 1}`}
-                          >
-                            <X size={16} /> {/* Standardized icon */}
-                          </Button>
-                        )}
+                  <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-3">Your Past Performances</h3>
+                  {pastPerformances.map((perf, index) => {
+                    const selectedRace = races.find(r => r.id === perf.raceId);
+                    const selectedRaceItem = selectedRace ? { id: selectedRace.id, name: selectedRace.name } : undefined;
+                    return (
+                      <div key={perf.id} className="space-y-3 p-3 mb-3 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700/50 relative">
+                        <div className="flex justify-between items-center mb-1">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Source Race #{index + 1}
+                          </label>
+                          {pastPerformances.length > 0 && ( // Show remove if any items, to allow removing the last one and re-adding
+                            <Button
+                              variant="ghost"
+                              size="sm" // Adjusted from icon to sm for better click area with p-1
+                              onClick={() => removePastPerformanceEntry(perf.id)}
+                              className="text-red-500 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-500/20 p-1 h-auto w-auto"
+                              aria-label={`Remove race ${index + 1}`}
+                            >
+                              <X size={16} /> {/* Standardized icon */}
+                            </Button>
+                          )}
+                        </div>
+                        <RaceSelector
+                          selectedValue={selectedRaceItem}
+                          onSelectValue={(raceId) => updatePastPerformanceRace(perf.id, raceId)}
+                          placeholder="Select past race"
+                          items={raceSelectorItemsCsv}
+                          disabled={isLoadingRaces || races.length === 0}
+                        />
+                        <Input
+                          type="text"
+                          placeholder="e.g., 03:45:30 (HH:MM:SS)"
+                          value={perf.timeInput}
+                          onChange={(e) => updatePastPerformanceTime(perf.id, e.target.value)}
+                          className="bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
+                        />
                       </div>
-                      <RaceSelector
-                        selectedValue={races.find(r => r.id === perf.raceId)}
-                        onSelectValue={(raceId) => updatePastPerformanceRace(perf.id, raceId)}
-                        placeholder="Select past race"
-                        racesData={races}
-                      />
-                      <Input
-                        type="text"
-                        placeholder="e.g., 03:45:30 (HH:MM:SS)"
-                        value={perf.timeInput}
-                        onChange={(e) => updatePastPerformanceTime(perf.id, e.target.value)}
-                        className="bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
-                      />
-                    </div>
-                  ))}
+                    );
+                  })}
                   <Button 
                     onClick={addPastPerformanceEntry} 
                     variant="outline" 
@@ -386,10 +291,11 @@ const Index = () => {
                     Target Race
                   </label>
                   <RaceSelector
-                    selectedValue={selectedTargetRace}
+                    selectedValue={selectedTargetRace ? { id: selectedTargetRace.id, name: selectedTargetRace.name } : undefined}
                     onSelectValue={setSelectedTargetRaceId}
                     placeholder="Select your target race"
-                    racesData={races}
+                    items={raceSelectorItemsCsv}
+                    disabled={isLoadingRaces || races.length === 0}
                   />
                 </div>
 
@@ -404,7 +310,7 @@ const Index = () => {
 
               {predictionResult && (
                 <CardFooter className="flex flex-col items-center justify-center pt-6 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Predicted Time for {selectedTargetRace?.name}:</p> {/* Light theme */}
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Predicted Time for {selectedTargetRace?.name}:</p>
                   {predictionResult.count === 1 ? (
                     <div>
                       <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{predictionResult.average}</p>
@@ -413,15 +319,15 @@ const Index = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center w-full">
                       <div>
                         <p className="text-xs text-gray-500 dark:text-gray-400">MIN</p>
-                        <p className="text-2xl font-semibold text-blue-500 dark:text-blue-400">{predictionResult.min}</p> {/* Light theme */}
+                        <p className="text-2xl font-semibold text-blue-500 dark:text-blue-400">{predictionResult.min}</p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500 dark:text-gray-400">AVERAGE</p>
-                        <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{predictionResult.average}</p> {/* Light theme */}
+                        <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{predictionResult.average}</p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500 dark:text-gray-400">MAX</p>
-                        <p className="text-2xl font-semibold text-blue-500 dark:text-blue-400">{predictionResult.max}</p> {/* Light theme */}
+                        <p className="text-2xl font-semibold text-blue-500 dark:text-blue-400">{predictionResult.max}</p>
                       </div>
                     </div>
                   )}
