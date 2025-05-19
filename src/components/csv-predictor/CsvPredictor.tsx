@@ -227,58 +227,51 @@ const CsvPredictor: React.FC = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
-          <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-3">Your Past Performances</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200">Your Past Performances</h3>
+            <Button
+              onClick={addPastPerformanceEntry}
+              variant="outline"
+              className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-400/20 px-3 py-1 text-sm"
+            >
+              Add Race
+            </Button>
+          </div>
           {pastPerformances.map((perf, index) => {
             const selectedRace = races.find(r => r.id === perf.raceId);
             const selectedRaceItem = selectedRace ? { id: selectedRace.id, name: selectedRace.name } : undefined;
             return (
-              <div key={perf.id} className="space-y-3 p-3 mb-3 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700/30 relative">
-                <div className="flex justify-between items-center mb-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Source Race #{index + 1}
-                  </label>
-                  {pastPerformances.length > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removePastPerformanceEntry(perf.id)}
-                      className="text-red-500 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-500/20 p-1 h-auto w-auto"
-                      aria-label={`Remove race ${index + 1}`}
-                    >
-                      <X size={16} />
-                    </Button>
-                  )}
+              <div key={perf.id} className="flex items-center space-x-2 mb-3">
+                <div className="flex-1 min-w-0">
+                  <RaceSelector
+                    selectedValue={selectedRaceItem}
+                    onSelectValue={(raceId) => updatePastPerformanceRace(perf.id, raceId)}
+                    placeholder={`Past Race #${index + 1}`}
+                    items={raceSelectorItemsCsv}
+                    disabled={isLoadingRaces || races.length === 0}
+                  />
                 </div>
-                <div className="flex flex-col md:flex-row md:space-x-2 space-y-2 md:space-y-0 mt-2">
-                  <div className="flex-1 min-w-0">
-                    <RaceSelector
-                      selectedValue={selectedRaceItem}
-                      onSelectValue={(raceId) => updatePastPerformanceRace(perf.id, raceId)}
-                      placeholder="Select past race"
-                      items={raceSelectorItemsCsv}
-                      disabled={isLoadingRaces || races.length === 0}
-                    />
-                  </div>
-                  <div className="flex-1 md:flex-none md:w-56 min-w-0">
-                    <Input
-                      type="text"
-                      placeholder="e.g., 03:45:30"
-                      value={perf.timeInput}
-                      onChange={(e) => updatePastPerformanceTime(perf.id, e.target.value)}
-                      className="w-full bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
-                    />
-                  </div>
+                <div className="flex-none w-40 min-w-0">
+                  <Input
+                    type="text"
+                    placeholder="HH:MM:SS"
+                    value={perf.timeInput}
+                    onChange={(e) => updatePastPerformanceTime(perf.id, e.target.value)}
+                    className="w-full bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
+                  />
                 </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removePastPerformanceEntry(perf.id)}
+                  className="text-red-500 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-500/20 p-1"
+                  aria-label={`Remove race ${index + 1}`}
+                >
+                  <X size={18} />
+                </Button>
               </div>
             );
           })}
-          <Button 
-            onClick={addPastPerformanceEntry} 
-            variant="outline" 
-            className="w-full mt-2 border-blue-500 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-400/20"
-          >
-            Add Another Past Performance
-          </Button>
         </div>
 
         <div className="space-y-2">
