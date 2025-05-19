@@ -5,12 +5,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import RacePredictorRatiosContainer from '@/components/ratios-predictor/RacePredictorRatiosContainer';
 import RaceSelector, { RaceSelectorItem } from '@/components/shared/RaceSelector';
-import Papa from 'papaparse'; // Added import for Papa
-import { useQuery } from '@tanstack/react-query'; // Added import for useQuery
-import { toast } from 'sonner'; // Added import for toast
-import { X } from 'lucide-react'; // Added import for X icon
-import { Race } from '@/types/race'; // Added import for Race type
-import { timeToSeconds, secondsToHhMmSs, parseCsvDurationToSeconds } from '@/lib/timeUtils'; // Added imports for time utils
+import Papa from 'papaparse';
+import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { X } from 'lucide-react';
+import { Race } from '@/types/race';
+import { timeToSeconds, secondsToHhMmSs, parseCsvDurationToSeconds } from '@/lib/timeUtils';
 
 // CSV URL for "CSV Predictor"
 const CSV_URL = 'https://raw.githubusercontent.com/xlsrln/urtp/main/all_eu_wintimes.csv';
@@ -203,23 +203,8 @@ const Index = () => {
       <h1 className="text-4xl font-extrabold text-center mb-8 text-gray-800 dark:text-gray-100">
         Ultra Race Time Predictor
       </h1>
-      <div className="w-full max-w-xs sm:max-w-sm md:max-w-md mb-6">
-        <ToggleGroup 
-          type="single" 
-          value={activeMode} 
-          onValueChange={(value) => { if (value) setActiveMode(value as 'ratios' | 'csv'); }} 
-          className="grid grid-cols-2 gap-1 border bg-muted p-1 rounded-md dark:bg-gray-700 dark:border-gray-600"
-        >
-          {/* Reordered: Common Runner Model first */}
-          <ToggleGroupItem value="ratios" aria-label="Common Runner Model" className="data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-md dark:data-[state=on]:bg-gray-500 dark:data-[state=on]:text-white">
-            Common Runner Model
-          </ToggleGroupItem>
-          <ToggleGroupItem value="csv" aria-label="Winner Time Model" className="data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-md dark:data-[state=on]:bg-gray-500 dark:data-[state=on]:text-white">
-            Winner Time Model
-          </ToggleGroupItem>
-        </ToggleGroup>
-      </div>
-
+      
+      {/* Content for activeMode === 'csv' */}
       {activeMode === 'csv' && (
         <>
           {isLoadingRaces && (
@@ -242,9 +227,8 @@ const Index = () => {
           )}
           {!isLoadingRaces && !isErrorRaces && races.length > 0 && (
             <Card className="w-full max-w-2xl shadow-2xl bg-white border-gray-300 text-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
-              <CardHeader className="text-center pb-4"> {/* Adjusted padding */}
-                {/* CardTitle removed from here */}
-                <CardDescription className="text-gray-600 dark:text-gray-400 text-base"> {/* Adjusted text size */}
+              <CardHeader className="text-center pb-4">
+                <CardDescription className="text-gray-600 dark:text-gray-400 text-base">
                   Predict your finish time by comparing the winning times in the races. Contains most ultra races in Europe.
                 </CardDescription>
               </CardHeader>
@@ -260,15 +244,15 @@ const Index = () => {
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Source Race #{index + 1}
                           </label>
-                          {pastPerformances.length > 0 && ( // Show remove if any items, to allow removing the last one and re-adding
+                          {pastPerformances.length > 0 && (
                             <Button
                               variant="ghost"
-                              size="sm" // Adjusted from icon to sm for better click area with p-1
+                              size="sm"
                               onClick={() => removePastPerformanceEntry(perf.id)}
                               className="text-red-500 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-500/20 p-1 h-auto w-auto"
                               aria-label={`Remove race ${index + 1}`}
                             >
-                              <X size={16} /> {/* Standardized icon */}
+                              <X size={16} />
                             </Button>
                           )}
                         </div>
@@ -322,7 +306,7 @@ const Index = () => {
 
               {predictionResult && (
                 <CardFooter className="flex flex-col items-center justify-center pt-6 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Predicted Time for {selectedTargetRace?.name}:</p> {/* Corrected */}
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Predicted Time for {selectedTargetRace?.name}:</p>
                   {predictionResult.count === 1 ? (
                     <div>
                       <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{predictionResult.average}</p>
@@ -355,9 +339,27 @@ const Index = () => {
         </>
       )}
 
+      {/* Content for activeMode === 'ratios' */}
       {activeMode === 'ratios' && (
         <RacePredictorRatiosContainer />
       )}
+
+      {/* ToggleGroup moved below the content cards */}
+      <div className="w-full max-w-xs sm:max-w-sm md:max-w-md mt-8 mb-6">
+        <ToggleGroup 
+          type="single" 
+          value={activeMode} 
+          onValueChange={(value) => { if (value) setActiveMode(value as 'ratios' | 'csv'); }} 
+          className="grid grid-cols-2 gap-1 border bg-muted p-1 rounded-md dark:bg-gray-700 dark:border-gray-600"
+        >
+          <ToggleGroupItem value="ratios" aria-label="Common Runner Model" className="data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-md dark:data-[state=on]:bg-gray-500 dark:data-[state=on]:text-white">
+            Common Runner Model
+          </ToggleGroupItem>
+          <ToggleGroupItem value="csv" aria-label="Winner Time Model" className="data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-md dark:data-[state=on]:bg-gray-500 dark:data-[state=on]:text-white">
+            Winner Time Model
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
     </div>
   );
 };
