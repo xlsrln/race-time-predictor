@@ -37,7 +37,7 @@ const RacePredictorRatiosContainer: React.FC = () => {
   [raceNames]);
 
   const sourceRacesFormProps = {
-    formTitle: "Your Past Performances (Common Runner Model)",
+    formTitle: "Add race performance",
     entries: sourceRaces,
     raceSelectorItems: raceSelectorItems,
     onUpdateEntryRace: (entryId: string, raceId: string | null) => updateSourceRace(entryId, 'raceId', raceId || ''),
