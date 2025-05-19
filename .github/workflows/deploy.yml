@@ -30,10 +30,6 @@ jobs:
 
       - name: Build project
         run: npm run build 
-        env:
-          # If you have any build-time environment variables, define them here
-          # For example, if your vite.config.ts uses import.meta.env.VITE_BASE_URL
-          # VITE_BASE_URL: /${{ github.event.repository.name }}/ # This is usually handled by the 'base' in vite.config.ts
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
