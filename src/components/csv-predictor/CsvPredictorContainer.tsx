@@ -100,7 +100,7 @@ const CsvPredictorContainer: React.FC = () => {
   };
   
   const sourceRacesFormProps = {
-    formTitle: "Your Past Performances (Winner Time Model)",
+    formTitle: "Add race performance",
     entries: pastPerformances.map(p => ({ id: p.id, raceId: p.raceId, time: p.timeInput })),
     raceSelectorItems: raceSelectorItems,
     onUpdateEntryRace: (entryId: string, raceId: string | null) => updatePastPerformanceEntry(entryId, 'raceId', raceId),
@@ -122,7 +122,7 @@ const CsvPredictorContainer: React.FC = () => {
 
   return (
     <PredictorLayout
-      pageDescription="Predict your finish time by comparing your past performances to winning times in those races, then applying that ratio to your target race's winning time. Uses a CSV data source of European ultra races."
+      pageDescription="Compares winning times in races and multiplies your time by that factor. Contains data for most ultra races in Europe."
       isLoadingInitialData={isLoadingRaces}
       initialDataError={isErrorRaces ? errorRaces : null}
       initialDataLoadingMessage="Loading CSV race data for Winner Time Model..."

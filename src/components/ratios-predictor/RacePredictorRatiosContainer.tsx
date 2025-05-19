@@ -58,7 +58,7 @@ const RacePredictorRatiosContainer: React.FC = () => {
 
   return (
     <PredictorLayout
-      pageDescription="Predict your race time based on how common runners perform across different races. Uses data from a fixed set of races."
+      pageDescription="Compares the times of people who have done both races, and applies that ratio to your time. Contains most ultra races in Sweden."
       isLoadingInitialData={isLoadingRaceData}
       initialDataError={raceDataError}
       initialDataLoadingMessage="Loading race data for Common Runner Model..."
@@ -86,7 +86,7 @@ const RacePredictorRatiosContainer: React.FC = () => {
           Model: Common Runner Ratios
         </Badge>
       }
-      footerPrimaryText="This model uses ratios from a common set of runners. Best for well-established races."
+      footerPrimaryText="Conditions and courses vary year to year. Use as an indication only."
       footerSecondaryText="by axel sarlin"
     />
   );
