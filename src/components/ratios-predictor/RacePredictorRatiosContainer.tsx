@@ -83,7 +83,7 @@ const RacePredictorRatiosContainer: React.FC = () => {
       }
       additionalBadges={
         <Badge variant="outline" className="border-green-500 text-green-600 dark:border-green-400 dark:text-green-300">
-          Model: Common Runner Ratios
+          Model: comparison based on runners in common
         </Badge>
       }
       footerPrimaryText="Conditions and courses vary year to year. Use as an indication only."
