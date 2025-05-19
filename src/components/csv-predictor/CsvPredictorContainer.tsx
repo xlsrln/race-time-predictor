@@ -147,7 +147,7 @@ const CsvPredictorContainer: React.FC = () => {
       }
       additionalBadges={
         <Badge variant="outline" className="border-purple-500 text-purple-600 dark:border-purple-400 dark:text-purple-300">
-          Model: based on winner time comparison
+          Comparison based on winner times
         </Badge>
       }
       footerPrimaryText="Conditions and routes can vary. Use as an indication only."
