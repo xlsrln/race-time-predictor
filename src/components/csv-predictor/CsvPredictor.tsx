@@ -1,8 +1,7 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card'; // Removed CardTitle as it's not used here
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
 import RaceSelector, { RaceSelectorItem } from '@/components/shared/RaceSelector';
 import Papa from 'papaparse';
 import { useQuery } from '@tanstack/react-query';
@@ -39,7 +38,7 @@ const fetchAndProcessRaces = async (): Promise<Race[]> => {
     Papa.parse<CsvRaceRow>(csvText, {
       header: true,
       skipEmptyLines: true,
-      dynamicTyping: false, // Keep as false to handle parsing manually
+      dynamicTyping: false, 
       complete: (results) => {
         if (results.errors.length > 0) {
           console.warn("CSV parsing errors encountered:", results.errors);
@@ -60,7 +59,7 @@ const fetchAndProcessRaces = async (): Promise<Race[]> => {
             }
 
             return {
-              id: `${row.country}-${row.event}-${row.year}-${index}`, // Ensure unique IDs
+              id: `${row.country}-${row.event}-${row.year}-${index}`,
               name: `${row.name} (${distKmNum}km)`,
               country: row.country,
               distKm: distKmNum,
@@ -84,7 +83,7 @@ const fetchAndProcessRaces = async (): Promise<Race[]> => {
 };
 
 interface PastPerformanceEntry {
-  id: string; // unique key for react list
+  id: string;
   raceId: string | null;
   timeInput: string;
 }
@@ -238,7 +237,7 @@ const CsvPredictor: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Source Race #{index + 1}
                   </label>
-                  {pastPerformances.length > 0 && ( // This condition might always be true if we ensure one entry
+                  {pastPerformances.length > 0 && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -250,20 +249,26 @@ const CsvPredictor: React.FC = () => {
                     </Button>
                   )}
                 </div>
-                <RaceSelector
-                  selectedValue={selectedRaceItem}
-                  onSelectValue={(raceId) => updatePastPerformanceRace(perf.id, raceId)}
-                  placeholder="Select past race"
-                  items={raceSelectorItemsCsv}
-                  disabled={isLoadingRaces || races.length === 0}
-                />
-                <Input
-                  type="text"
-                  placeholder="e.g., 03:45:30 (HH:MM:SS)"
-                  value={perf.timeInput}
-                  onChange={(e) => updatePastPerformanceTime(perf.id, e.target.value)}
-                  className="bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
-                />
+                <div className="flex flex-col md:flex-row md:space-x-2 space-y-2 md:space-y-0 mt-2">
+                  <div className="flex-1 min-w-0">
+                    <RaceSelector
+                      selectedValue={selectedRaceItem}
+                      onSelectValue={(raceId) => updatePastPerformanceRace(perf.id, raceId)}
+                      placeholder="Select past race"
+                      items={raceSelectorItemsCsv}
+                      disabled={isLoadingRaces || races.length === 0}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <Input
+                      type="text"
+                      placeholder="e.g., 03:45:30 (HH:MM:SS)"
+                      value={perf.timeInput}
+                      onChange={(e) => updatePastPerformanceTime(perf.id, e.target.value)}
+                      className="bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
+                    />
+                  </div>
+                </div>
               </div>
             );
           })}
@@ -333,4 +338,3 @@ const CsvPredictor: React.FC = () => {
 };
 
 export default CsvPredictor;
-

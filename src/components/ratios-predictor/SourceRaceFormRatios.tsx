@@ -9,8 +9,7 @@ import RaceSelector, { RaceSelectorItem } from '@/components/shared/RaceSelector
 
 interface SourceRaceFormRatiosProps {
   sourceRaces: SourceRaceEntryRatios[];
-  // raceNames: string[]; // No longer needed here if using RaceSelector items directly
-  raceSelectorItems: RaceSelectorItem[]; // Changed to accept RaceSelectorItem[]
+  raceSelectorItems: RaceSelectorItem[];
   updateSourceRace: (index: number, field: 'race' | 'time', value: string) => void;
   addSourceRace: () => void;
   removeSourceRace: (index: number) => void;
@@ -18,17 +17,11 @@ interface SourceRaceFormRatiosProps {
 
 const SourceRaceFormRatios: React.FC<SourceRaceFormRatiosProps> = ({
   sourceRaces,
-  // raceNames, // Removed
-  raceSelectorItems, // Using this now
+  raceSelectorItems,
   updateSourceRace,
   addSourceRace,
   removeSourceRace
 }) => {
-  // const raceSelectorItems: RaceSelectorItem[] = React.useMemo(() => 
-  //   raceNames.map(name => ({ id: name, name: name })), 
-  //   [raceNames]
-  // ); // This logic is now expected to be passed via props
-
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-3">Races you've completed</h3>
@@ -41,7 +34,7 @@ const SourceRaceFormRatios: React.FC<SourceRaceFormRatiosProps> = ({
               <Label htmlFor={`sourceRaceRatios-${index}`} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Source Race #{index + 1}
               </Label>
-              {sourceRaces.length > 0 && (
+              {sourceRaces.length > 0 && ( // Keep > 0, as removeSourceRace might prevent it from being empty if it has a minimum of 1. If it can be 0, this is fine.
                 <Button 
                   type="button" 
                   variant="ghost" 
@@ -55,28 +48,30 @@ const SourceRaceFormRatios: React.FC<SourceRaceFormRatiosProps> = ({
               )}
             </div>
             
-            <div className="space-y-1">
-              <RaceSelector
-                selectedValue={selectedRaceItem}
-                onSelectValue={(value) => {
-                  if (value !== null) {
-                    updateSourceRace(index, 'race', value);
-                  }
-                }}
-                placeholder="Select race"
-                items={raceSelectorItems}
-                disabled={raceSelectorItems.length === 0}
-              />
-            </div>
-            
-            <div className="space-y-1">
-              <Input 
-                id={`sourceTimeRatios-${index}`} 
-                placeholder="e.g., 03:45:30 (HH:MM:SS)" // Updated placeholder for consistency
-                value={entry.time} 
-                onChange={(e) => updateSourceRace(index, 'time', e.target.value)} 
-                className="w-full bg-white dark:bg-gray-700 dark:border-gray-600"
-              />
+            <div className="flex flex-col md:flex-row md:space-x-2 space-y-2 md:space-y-0">
+              <div className="flex-1 min-w-0">
+                <RaceSelector
+                  selectedValue={selectedRaceItem}
+                  onSelectValue={(value) => {
+                    if (value !== null) {
+                      updateSourceRace(index, 'race', value);
+                    }
+                  }}
+                  placeholder="Select race"
+                  items={raceSelectorItems}
+                  disabled={raceSelectorItems.length === 0}
+                />
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <Input 
+                  id={`sourceTimeRatios-${index}`} 
+                  placeholder="e.g., 03:45:30 (HH:MM:SS)"
+                  value={entry.time} 
+                  onChange={(e) => updateSourceRace(index, 'time', e.target.value)} 
+                  className="w-full bg-white dark:bg-gray-700 dark:border-gray-600"
+                />
+              </div>
             </div>
           </div>
         );
