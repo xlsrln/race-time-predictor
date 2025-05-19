@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
+
+import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown, X } from 'lucide-react'; // Added X icon
 import { cn } from '@/lib/utils';
 import { Race } from '@/types/race';
 import { timeToSeconds, secondsToHhMmSs, parseCsvDurationToSeconds } from '@/lib/timeUtils';
@@ -41,45 +42,38 @@ const fetchAndProcessRaces = async (): Promise<Race[]> => {
     Papa.parse<CsvRaceRow>(csvText, {
       header: true,
       skipEmptyLines: true,
-      dynamicTyping: false, // Parse all as strings first
+      dynamicTyping: false,
       complete: (results) => {
         if (results.errors.length > 0) {
-          // Log errors but try to process valid data
           console.warn("CSV parsing errors encountered:", results.errors);
-          // Depending on severity, you might want to reject if crucial data is missing or malformed
-          // For now, we'll proceed with successfully parsed rows
         }
         
         const processedRaces = results.data
           .map((row, index) => {
-            // Basic validation for required fields from CSV
             if (!row.country || !row.event || !row.name || !row.dist_km || !row.year || !row.duration) {
-              // console.warn(`Skipping incomplete row at index ${index}:`, row);
               return null; 
             }
 
             const distKmNum = parseFloat(row.dist_km);
-            const yearNum = parseInt(row.year, 10);
+            const yearNum = parseInt(row.year, 10); // Year is still parsed for data integrity but not used in display name
             const winnerTimeSeconds = parseCsvDurationToSeconds(row.duration);
 
             if (isNaN(distKmNum) || distKmNum <= 0 || isNaN(yearNum) || winnerTimeSeconds === null || winnerTimeSeconds <= 0) {
-              // console.warn(`Skipping row with invalid/incomplete data for processing at index ${index}:`, row);
               return null;
             }
 
             return {
-              id: `${row.country}-${row.event}-${row.year}-${index}`, // Index ensures uniqueness if event ID isn't globally unique
-              name: `${row.name} (${distKmNum}km, ${yearNum})`,
+              id: `${row.country}-${row.event}-${row.year}-${index}`,
+              name: `${row.name} (${distKmNum}km)`, // Year removed from display name
               country: row.country,
               distKm: distKmNum,
-              year: yearNum,
+              year: yearNum, // Keep year in data object
               winnerTimeSeconds: winnerTimeSeconds,
             };
           })
-          .filter(race => race !== null) as Race[]; // Type assertion after filtering nulls
+          .filter(race => race !== null) as Race[];
         
         if (processedRaces.length === 0 && results.data.length > 0) {
-          // This means all rows were filtered out, potentially due to data quality issues or strict filtering
           console.warn("All CSV rows were filtered out after processing. Check data quality and parsing logic.");
         }
         resolve(processedRaces);
@@ -92,113 +86,175 @@ const fetchAndProcessRaces = async (): Promise<Race[]> => {
   });
 };
 
+interface PastPerformanceEntry {
+  id: string; // unique key for react list
+  raceId: string | null;
+  timeInput: string;
+}
+
 const Index = () => {
   const { data: races = [], isLoading: isLoadingRaces, isError: isErrorRaces, error: errorRaces } = useQuery<Race[], Error>({
     queryKey: ['races'], 
     queryFn: fetchAndProcessRaces,
-    staleTime: 1000 * 60 * 60, // Cache for 1 hour
-    refetchOnWindowFocus: false, // Optional: prevent refetch on window focus
+    staleTime: 1000 * 60 * 60,
+    refetchOnWindowFocus: false,
   });
 
-  const [selectedPastRaceId, setSelectedPastRaceId] = useState<string | null>(null);
-  const [userTimeInput, setUserTimeInput] = useState<string>('');
+  const [pastPerformances, setPastPerformances] = useState<PastPerformanceEntry[]>([
+    { id: Date.now().toString(), raceId: null, timeInput: '' }
+  ]);
   const [selectedTargetRaceId, setSelectedTargetRaceId] = useState<string | null>(null);
-  const [predictedTime, setPredictedTime] = useState<string | null>(null);
-
-  const [pastRacePopoverOpen, setPastRacePopoverOpen] = useState(false);
+  const [predictionResult, setPredictionResult] = useState<{ average: string; min: string; max: string; } | null>(null);
+  
   const [targetRacePopoverOpen, setTargetRacePopoverOpen] = useState(false);
 
-  const selectedPastRace = useMemo(() => races.find(r => r.id === selectedPastRaceId), [races, selectedPastRaceId]);
   const selectedTargetRace = useMemo(() => races.find(r => r.id === selectedTargetRaceId), [races, selectedTargetRaceId]);
 
+  const addPastPerformanceEntry = () => {
+    setPastPerformances(prev => [...prev, { id: Date.now().toString(), raceId: null, timeInput: '' }]);
+  };
+
+  const updatePastPerformanceRace = (id: string, raceId: string | null) => {
+    setPastPerformances(prev => prev.map(p => p.id === id ? { ...p, raceId } : p));
+  };
+
+  const updatePastPerformanceTime = (id: string, timeInput: string) => {
+    setPastPerformances(prev => prev.map(p => p.id === id ? { ...p, timeInput } : p));
+  };
+
+  const removePastPerformanceEntry = (id: string) => {
+    setPastPerformances(prev => {
+      const newPerformances = prev.filter(p => p.id !== id);
+      // If all are removed, add a new blank one back
+      if (newPerformances.length === 0) {
+        return [{ id: Date.now().toString(), raceId: null, timeInput: '' }];
+      }
+      return newPerformances;
+    });
+  };
+
   const handlePredictTime = () => {
-    if (!selectedPastRace || !selectedTargetRace) {
-      toast.error("Please select both your past race and a target race.");
-      setPredictedTime(null);
+    if (pastPerformances.length === 0 || pastPerformances.every(p => !p.raceId || !p.timeInput)) {
+      toast.error("Please add and complete at least one past race performance.");
+      setPredictionResult(null);
+      return;
+    }
+    if (!selectedTargetRace) {
+      toast.error("Please select a target race.");
+      setPredictionResult(null);
       return;
     }
 
-    const userTimeInSeconds = timeToSeconds(userTimeInput);
-    if (userTimeInSeconds === null || userTimeInSeconds <= 0) {
-      toast.error("Please enter a valid time for your past race (e.g., HH:MM or HH:MM:SS).");
-      setPredictedTime(null);
+    const individualPredictionsSeconds: number[] = [];
+
+    for (const perf of pastPerformances) {
+      if (!perf.raceId || !perf.timeInput) {
+        // Silently skip incomplete entries if some are complete, error shown if all are incomplete by above check
+        continue; 
+      }
+      const pastRaceDetails = races.find(r => r.id === perf.raceId);
+      if (!pastRaceDetails) {
+        toast.warn(`Could not find details for a past race. Skipping this entry.`);
+        continue;
+      }
+
+      const userTimeInSeconds = timeToSeconds(perf.timeInput);
+      if (userTimeInSeconds === null || userTimeInSeconds <= 0) {
+        toast.warn(`Invalid time format for "${pastRaceDetails.name}": ${perf.timeInput}. Skipping this entry.`);
+        continue;
+      }
+
+      if (pastRaceDetails.winnerTimeSeconds <= 0 || selectedTargetRace.winnerTimeSeconds <= 0) {
+          toast.warn(`Race data is incomplete for "${pastRaceDetails.name}" or target race. Skipping prediction for this entry.`);
+          continue;
+      }
+
+      const predictionFactor = userTimeInSeconds / pastRaceDetails.winnerTimeSeconds;
+      const predictedTimeInSeconds = selectedTargetRace.winnerTimeSeconds * predictionFactor;
+      individualPredictionsSeconds.push(predictedTimeInSeconds);
+    }
+
+    if (individualPredictionsSeconds.length === 0) {
+      toast.error("No valid past performances to make a prediction. Please check your entries.");
+      setPredictionResult(null);
       return;
     }
 
-    if (selectedPastRace.winnerTimeSeconds <= 0 || selectedTargetRace.winnerTimeSeconds <= 0) {
-        toast.error("Selected race data is incomplete. Cannot perform prediction.");
-        setPredictedTime(null);
-        return;
-    }
+    const sum = individualPredictionsSeconds.reduce((acc, curr) => acc + curr, 0);
+    const averageSeconds = sum / individualPredictionsSeconds.length;
+    const minSeconds = Math.min(...individualPredictionsSeconds);
+    const maxSeconds = Math.max(...individualPredictionsSeconds);
 
-    const predictionFactor = userTimeInSeconds / selectedPastRace.winnerTimeSeconds;
-    const predictedTimeInSeconds = selectedTargetRace.winnerTimeSeconds * predictionFactor;
-    
-    setPredictedTime(secondsToHhMmSs(predictedTimeInSeconds));
+    setPredictionResult({
+      average: secondsToHhMmSs(averageSeconds),
+      min: secondsToHhMmSs(minSeconds),
+      max: secondsToHhMmSs(maxSeconds),
+    });
     toast.success("Prediction successful!");
   };
 
+  // Refactored RaceSelector to manage its own popover state
   const RaceSelector = ({
-    popoverOpen,
-    setPopoverOpen,
     selectedValue,
     onSelectValue,
     placeholder,
-    racesData // Added racesData prop
+    racesData
   }: {
-    popoverOpen: boolean;
-    setPopoverOpen: (open: boolean) => void;
     selectedValue: Race | undefined;
     onSelectValue: (value: string | null) => void;
     placeholder: string;
-    racesData: Race[]; // Explicitly pass races data
-  }) => (
-    <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={popoverOpen}
-          className="w-full justify-between text-sm md:text-base"
-        >
-          {selectedValue ? selectedValue.name : placeholder}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0">
-        <Command>
-          <CommandInput placeholder="Search race..." />
-          <CommandList>
-            <CommandEmpty>No race found.</CommandEmpty>
-            <CommandGroup>
-              {racesData.map((race) => (
-                <CommandItem
-                  key={race.id}
-                  value={race.name} // Use name for searchability
-                  onSelect={() => {
-                    onSelectValue(race.id);
-                    setPopoverOpen(false);
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      selectedValue?.id === race.id ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {race.name}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
+    racesData: Race[];
+  }) => {
+    const [open, setOpen] = React.useState(false);
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between text-sm md:text-base border-gray-300 text-gray-700 hover:bg-gray-50" // Light theme
+          >
+            {selectedValue ? selectedValue.name : placeholder}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0 bg-white border-gray-300"> {/* Light theme */}
+          <Command>
+            <CommandInput placeholder="Search race..." className="border-gray-300 text-gray-900" /> {/* Light theme */}
+            <CommandList>
+              <CommandEmpty className="text-gray-600">No race found.</CommandEmpty> {/* Light theme */}
+              <CommandGroup>
+                {racesData.map((race) => (
+                  <CommandItem
+                    key={race.id}
+                    value={race.name}
+                    onSelect={() => {
+                      onSelectValue(race.id);
+                      setOpen(false);
+                    }}
+                    className="text-gray-800 hover:bg-gray-100 data-[selected='true']:bg-blue-100 data-[selected=true]:text-blue-700" // Light theme
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        selectedValue?.id === race.id ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {race.name}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    );
+  }
 
   if (isLoadingRaces) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 p-4 text-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 p-4 text-gray-800"> {/* Light theme */}
         <p className="text-xl">Loading race data...</p>
       </div>
     );
@@ -206,11 +262,11 @@ const Index = () => {
 
   if (isErrorRaces) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 p-4 text-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 p-4 text-gray-800"> {/* Light theme */}
         <div className="text-center">
-          <p className="text-xl text-red-400">Error loading race data</p>
-          <p className="text-slate-400">{(errorRaces as Error)?.message || 'An unknown error occurred.'}</p>
-          <p className="text-slate-400 mt-2">Please check your internet connection or try again later.</p>
+          <p className="text-xl text-red-600">Error loading race data</p> {/* Light theme */}
+          <p className="text-gray-600">{(errorRaces as Error)?.message || 'An unknown error occurred.'}</p> {/* Light theme */}
+          <p className="text-gray-500 mt-2">Please check your internet connection or try again later.</p> {/* Light theme */}
         </div>
       </div>
     );
@@ -218,63 +274,76 @@ const Index = () => {
   
   if (!isLoadingRaces && !isErrorRaces && races.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 p-4 text-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 p-4 text-gray-800"> {/* Light theme */}
         <div className="text-center">
           <p className="text-xl">No Race Data Available</p>
-          <p className="text-slate-400">The race data source might be empty, temporarily unavailable, or all data was invalid.</p>
-           <p className="text-slate-400 mt-2">Please try again later or contact support if the issue persists.</p>
+          <p className="text-gray-600">The race data source might be empty, temporarily unavailable, or all data was invalid.</p> {/* Light theme */}
+           <p className="text-gray-500 mt-2">Please try again later or contact support if the issue persists.</p> {/* Light theme */}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 p-4">
-      <Card className="w-full max-w-lg shadow-2xl bg-slate-800 border-slate-700 text-slate-50">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 p-4"> {/* Light theme */}
+      <Card className="w-full max-w-2xl shadow-2xl bg-white border-gray-300 text-gray-900"> {/* Light theme, wider card */}
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-cyan-300">
+          <CardTitle className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600"> {/* Light theme gradient */}
             Race Time Predictor
           </CardTitle>
-          <CardDescription className="text-slate-400">
-            Estimate your time for a target race based on a past performance.
+          <CardDescription className="text-gray-600"> {/* Light theme */}
+            Estimate your time for a target race based on past performances.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <label htmlFor="past-race" className="block text-sm font-medium text-slate-300">
-              Your Past Race
-            </label>
-            <RaceSelector
-              popoverOpen={pastRacePopoverOpen}
-              setPopoverOpen={setPastRacePopoverOpen}
-              selectedValue={selectedPastRace}
-              onSelectValue={setSelectedPastRaceId}
-              placeholder="Select your past race"
-              racesData={races}
-            />
+          <div>
+            <h3 className="text-lg font-medium text-gray-800 mb-2">Your Past Performances</h3> {/* Light theme */}
+            {pastPerformances.map((perf, index) => (
+              <div key={perf.id} className="space-y-3 p-3 mb-3 border border-gray-200 rounded-md bg-gray-50 relative"> {/* Light theme */}
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-medium text-gray-700"> {/* Light theme */}
+                    Past Race #{index + 1}
+                  </label>
+                  {pastPerformances.length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removePastPerformanceEntry(perf.id)}
+                      className="text-red-500 hover:bg-red-100 p-1" // Light theme
+                    >
+                      <X size={18} />
+                    </Button>
+                  )}
+                </div>
+                <RaceSelector
+                  selectedValue={races.find(r => r.id === perf.raceId)}
+                  onSelectValue={(raceId) => updatePastPerformanceRace(perf.id, raceId)}
+                  placeholder="Select past race"
+                  racesData={races}
+                />
+                <Input
+                  type="text"
+                  placeholder="e.g., 03:45:30 (HH:MM:SS)"
+                  value={perf.timeInput}
+                  onChange={(e) => updatePastPerformanceTime(perf.id, e.target.value)}
+                  className="bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500" /* Light theme */
+                />
+              </div>
+            ))}
+            <Button 
+              onClick={addPastPerformanceEntry} 
+              variant="outline" 
+              className="w-full mt-2 border-blue-500 text-blue-600 hover:bg-blue-50" /* Light theme */
+            >
+              Add Another Past Performance
+            </Button>
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="user-time" className="block text-sm font-medium text-slate-300">
-              Your Time for Past Race (HH:MM or HH:MM:SS)
-            </label>
-            <Input
-              id="user-time"
-              type="text"
-              placeholder="e.g., 03:45:30"
-              value={userTimeInput}
-              onChange={(e) => setUserTimeInput(e.target.value)}
-              className="bg-slate-700 border-slate-600 text-slate-50 placeholder-slate-500 focus:ring-sky-500 focus:border-sky-500"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="target-race" className="block text-sm font-medium text-slate-300">
+            <label htmlFor="target-race" className="block text-sm font-medium text-gray-700"> {/* Light theme */}
               Target Race
             </label>
             <RaceSelector
-              popoverOpen={targetRacePopoverOpen}
-              setPopoverOpen={setTargetRacePopoverOpen}
               selectedValue={selectedTargetRace}
               onSelectValue={setSelectedTargetRaceId}
               placeholder="Select your target race"
@@ -284,17 +353,30 @@ const Index = () => {
 
           <Button 
             onClick={handlePredictTime} 
-            className="w-full bg-sky-500 hover:bg-sky-600 text-slate-50 font-semibold py-3 text-base"
-            disabled={isLoadingRaces || races.length === 0} // Disable button if races are loading or empty
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 text-base" /* Light theme */
+            disabled={isLoadingRaces || races.length === 0}
           >
             Predict My Time
           </Button>
         </CardContent>
 
-        {predictedTime && (
-          <CardFooter className="flex flex-col items-center justify-center pt-6 border-t border-slate-700">
-            <p className="text-sm text-slate-400">Predicted Time for {selectedTargetRace?.name}:</p>
-            <p className="text-4xl font-bold text-sky-400">{predictedTime}</p>
+        {predictionResult && (
+          <CardFooter className="flex flex-col items-center justify-center pt-6 border-t border-gray-200"> {/* Light theme */}
+            <p className="text-sm text-gray-600 mb-1">Predicted Time for {selectedTargetRace?.name}:</p> {/* Light theme */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center w-full">
+              <div>
+                <p className="text-xs text-gray-500">MIN</p>
+                <p className="text-2xl font-semibold text-blue-500">{predictionResult.min}</p> {/* Light theme */}
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">AVERAGE</p>
+                <p className="text-3xl font-bold text-blue-600">{predictionResult.average}</p> {/* Light theme */}
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">MAX</p>
+                <p className="text-2xl font-semibold text-blue-500">{predictionResult.max}</p> {/* Light theme */}
+              </div>
+            </div>
           </CardFooter>
         )}
       </Card>
@@ -303,3 +385,4 @@ const Index = () => {
 };
 
 export default Index;
+
