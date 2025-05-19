@@ -1,46 +1,107 @@
-
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Check, ChevronsUpDown, AlertCircle } from 'lucide-react';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Race } from '@/types/race';
 import { timeToSeconds, secondsToHhMmSs, parseCsvDurationToSeconds } from '@/lib/timeUtils';
 import { toast } from "sonner";
+import { useQuery } from '@tanstack/react-query';
+import Papa from 'papaparse';
 
-// Mock data - replace with CSV data later
-const MOCK_RACES_RAW = [
-  { country: "FRA", event: "1", name: "Paris Marathon", dist_km: 42.2, year: 2023, duration: "0 days 02:05:30" },
-  { country: "GER", event: "2", name: "Berlin Marathon", dist_km: 42.2, year: 2023, duration: "0 days 02:01:09" },
-  { country: "USA", event: "3", name: "Chicago Marathon", dist_km: 42.2, year: 2023, duration: "0 days 02:00:35" },
-  { country: "GBR", event: "4", name: "London Marathon", dist_km: 42.2, year: 2023, duration: "0 days 02:01:25" },
-  { country: "JPN", event: "5", name: "Tokyo Marathon", dist_km: 42.2, year: 2023, duration: "0 days 02:02:16" },
-  { country: "FRA", event: "6", name: "Nice Half Marathon", dist_km: 21.1, year: 2023, duration: "0 days 01:00:00" },
-  { country: "ESP", event: "7", name: "Valencia 10K", dist_km: 10, year: 2024, duration: "0 days 00:26:30" },
-  { country: "SUI", event: "8", name: "UTMB", dist_km: 171, year: 2023, duration: "1 days 05:30:00" } // Example with >24h
-];
+// CSV URL
+const CSV_URL = 'https://raw.githubusercontent.com/xlsrln/urtp/main/all_eu_wintimes.csv';
 
-const processRaces = (rawRaces: typeof MOCK_RACES_RAW): Race[] => {
-  return rawRaces.map((race, index) => {
-    const winnerTimeSeconds = parseCsvDurationToSeconds(race.duration);
-    return {
-      id: `${race.country}-${race.event}-${race.year}-${index}`, // Ensure unique ID
-      name: `${race.name} (${race.dist_km}km, ${race.year})`,
-      country: race.country,
-      distKm: race.dist_km,
-      year: race.year,
-      winnerTimeSeconds: winnerTimeSeconds !== null ? winnerTimeSeconds : 0, // Handle potential parsing errors
-    };
-  }).filter(race => race.winnerTimeSeconds > 0); // Filter out races with invalid durations
+// Interface for CSV row structure
+interface CsvRaceRow {
+  country: string;
+  event: string;
+  name: string;
+  dist_km: string;
+  year: string;
+  finishers: string; // Kept for completeness, though not directly used in Race type
+  duration: string;
+  "": string; // Handle potential empty last column from some CSV exports
+}
+
+// Function to fetch and process race data
+const fetchAndProcessRaces = async (): Promise<Race[]> => {
+  const response = await fetch(CSV_URL);
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Failed to fetch race data:', response.status, errorText);
+    throw new Error(`Failed to fetch race data: ${response.status}`);
+  }
+  const csvText = await response.text();
+
+  return new Promise((resolve, reject) => {
+    Papa.parse<CsvRaceRow>(csvText, {
+      header: true,
+      skipEmptyLines: true,
+      dynamicTyping: false, // Parse all as strings first
+      complete: (results) => {
+        if (results.errors.length > 0) {
+          // Log errors but try to process valid data
+          console.warn("CSV parsing errors encountered:", results.errors);
+          // Depending on severity, you might want to reject if crucial data is missing or malformed
+          // For now, we'll proceed with successfully parsed rows
+        }
+        
+        const processedRaces = results.data
+          .map((row, index) => {
+            // Basic validation for required fields from CSV
+            if (!row.country || !row.event || !row.name || !row.dist_km || !row.year || !row.duration) {
+              // console.warn(`Skipping incomplete row at index ${index}:`, row);
+              return null; 
+            }
+
+            const distKmNum = parseFloat(row.dist_km);
+            const yearNum = parseInt(row.year, 10);
+            const winnerTimeSeconds = parseCsvDurationToSeconds(row.duration);
+
+            if (isNaN(distKmNum) || distKmNum <= 0 || isNaN(yearNum) || winnerTimeSeconds === null || winnerTimeSeconds <= 0) {
+              // console.warn(`Skipping row with invalid/incomplete data for processing at index ${index}:`, row);
+              return null;
+            }
+
+            return {
+              id: `${row.country}-${row.event}-${row.year}-${index}`, // Index ensures uniqueness if event ID isn't globally unique
+              name: `${row.name} (${distKmNum}km, ${yearNum})`,
+              country: row.country,
+              distKm: distKmNum,
+              year: yearNum,
+              winnerTimeSeconds: winnerTimeSeconds,
+            };
+          })
+          .filter(race => race !== null) as Race[]; // Type assertion after filtering nulls
+        
+        if (processedRaces.length === 0 && results.data.length > 0) {
+          // This means all rows were filtered out, potentially due to data quality issues or strict filtering
+          console.warn("All CSV rows were filtered out after processing. Check data quality and parsing logic.");
+        }
+        resolve(processedRaces);
+      },
+      error: (error: Error) => {
+        console.error("Papaparse critical error:", error);
+        reject(new Error('Failed to parse CSV data due to a Papaparse error.'));
+      }
+    });
+  });
 };
 
 const Index = () => {
-  const [races, setRaces] = useState<Race[]>(() => processRaces(MOCK_RACES_RAW));
+  const { data: races = [], isLoading: isLoadingRaces, isError: isErrorRaces, error: errorRaces } = useQuery<Race[], Error>({
+    queryKey: ['races'], 
+    queryFn: fetchAndProcessRaces,
+    staleTime: 1000 * 60 * 60, // Cache for 1 hour
+    refetchOnWindowFocus: false, // Optional: prevent refetch on window focus
+  });
+
   const [selectedPastRaceId, setSelectedPastRaceId] = useState<string | null>(null);
-  const [userTimeInput, setUserTimeInput] = useState<string>(''); // HH:MM format
+  const [userTimeInput, setUserTimeInput] = useState<string>('');
   const [selectedTargetRaceId, setSelectedTargetRaceId] = useState<string | null>(null);
   const [predictedTime, setPredictedTime] = useState<string | null>(null);
 
@@ -82,13 +143,15 @@ const Index = () => {
     setPopoverOpen,
     selectedValue,
     onSelectValue,
-    placeholder
+    placeholder,
+    racesData // Added racesData prop
   }: {
     popoverOpen: boolean;
     setPopoverOpen: (open: boolean) => void;
     selectedValue: Race | undefined;
     onSelectValue: (value: string | null) => void;
     placeholder: string;
+    racesData: Race[]; // Explicitly pass races data
   }) => (
     <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
       <PopoverTrigger asChild>
@@ -108,7 +171,7 @@ const Index = () => {
           <CommandList>
             <CommandEmpty>No race found.</CommandEmpty>
             <CommandGroup>
-              {races.map((race) => (
+              {racesData.map((race) => (
                 <CommandItem
                   key={race.id}
                   value={race.name} // Use name for searchability
@@ -133,6 +196,38 @@ const Index = () => {
     </Popover>
   );
 
+  if (isLoadingRaces) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 p-4 text-slate-50">
+        <p className="text-xl">Loading race data...</p>
+      </div>
+    );
+  }
+
+  if (isErrorRaces) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 p-4 text-slate-50">
+        <div className="text-center">
+          <p className="text-xl text-red-400">Error loading race data</p>
+          <p className="text-slate-400">{(errorRaces as Error)?.message || 'An unknown error occurred.'}</p>
+          <p className="text-slate-400 mt-2">Please check your internet connection or try again later.</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!isLoadingRaces && !isErrorRaces && races.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 p-4 text-slate-50">
+        <div className="text-center">
+          <p className="text-xl">No Race Data Available</p>
+          <p className="text-slate-400">The race data source might be empty, temporarily unavailable, or all data was invalid.</p>
+           <p className="text-slate-400 mt-2">Please try again later or contact support if the issue persists.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 p-4">
       <Card className="w-full max-w-lg shadow-2xl bg-slate-800 border-slate-700 text-slate-50">
@@ -155,6 +250,7 @@ const Index = () => {
               selectedValue={selectedPastRace}
               onSelectValue={setSelectedPastRaceId}
               placeholder="Select your past race"
+              racesData={races}
             />
           </div>
 
@@ -182,10 +278,15 @@ const Index = () => {
               selectedValue={selectedTargetRace}
               onSelectValue={setSelectedTargetRaceId}
               placeholder="Select your target race"
+              racesData={races}
             />
           </div>
 
-          <Button onClick={handlePredictTime} className="w-full bg-sky-500 hover:bg-sky-600 text-slate-50 font-semibold py-3 text-base">
+          <Button 
+            onClick={handlePredictTime} 
+            className="w-full bg-sky-500 hover:bg-sky-600 text-slate-50 font-semibold py-3 text-base"
+            disabled={isLoadingRaces || races.length === 0} // Disable button if races are loading or empty
+          >
             Predict My Time
           </Button>
         </CardContent>
@@ -202,4 +303,3 @@ const Index = () => {
 };
 
 export default Index;
-
