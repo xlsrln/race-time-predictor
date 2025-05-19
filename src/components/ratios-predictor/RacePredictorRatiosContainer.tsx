@@ -74,7 +74,7 @@ const RacePredictorRatiosContainer: React.FC = () => {
         />
       }
       onPredict={handlePredict}
-      predictButtonText={isPredicting ? "Predicting..." : "Predict My Time (Common Runner)"}
+      predictButtonText={isPredicting ? "Predicting..." : "Predict My Time"}
       isPredictButtonDisabled={isPredictButtonDisabled}
       PredictionResultComponent={
         predictionResult ? (

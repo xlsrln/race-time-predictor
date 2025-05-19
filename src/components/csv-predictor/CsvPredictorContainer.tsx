@@ -138,7 +138,7 @@ const CsvPredictorContainer: React.FC = () => {
         />
       }
       onPredict={handlePredictTime}
-      predictButtonText={isPredicting ? "Predicting..." : "Predict My Time (Winner Time)"}
+      predictButtonText={isPredicting ? "Predicting..." : "Predict My Time"}
       isPredictButtonDisabled={isPredictButtonDisabled}
       PredictionResultComponent={
         predictionResult ? (
