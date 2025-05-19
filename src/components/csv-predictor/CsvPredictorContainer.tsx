@@ -3,10 +3,10 @@ import React, { useState } from 'react';
 import { useCsvData } from '@/hooks/csv-predictor/useCsvData';
 import PredictorLayout from '@/components/shared/PredictorLayout';
 import TargetRaceSelectorCsv from './TargetRaceSelectorCsv';
-import PredictionResultCsv from './PredictionResultCsv';
+import PredictionResultCsvDisplay from './PredictionResultCsv'; // Renamed for clarity if PredictionResultCsv is a type
 import { PredictionResultCsv as PredictionResultCsvType } from '@/types/csvPredictor';
 import { toast } from 'sonner';
-import { timeToSeconds, secondsToHhMmSs, validateHhMmSs } from '@/lib/timeUtils';
+import { timeToSeconds, secondsToHhMmSs, validateHhMmSs } from '@/lib/timeUtils'; // validateHhMmSs should now be available
 import { Badge } from '@/components/ui/badge';
 
 const CsvPredictorContainer: React.FC = () => {
@@ -26,7 +26,7 @@ const CsvPredictorContainer: React.FC = () => {
   } = useCsvData();
 
   const [predictionResult, setPredictionResult] = useState<PredictionResultCsvType | null>(null);
-  const [isPredicting, setIsPredicting] = useState(false); // Added for local prediction state
+  const [isPredicting, setIsPredicting] = useState(false);
 
   const handlePredictTime = () => {
     if (pastPerformances.length === 0 || pastPerformances.every(p => !p.raceId || !p.timeInput)) {
@@ -47,6 +47,7 @@ const CsvPredictorContainer: React.FC = () => {
       if (!perf.raceId || !perf.timeInput) {
         continue; 
       }
+      // Use the newly available validateHhMmSs
       if (!validateHhMmSs(perf.timeInput)) {
         toast.warning(`Invalid time format for a past performance: ${perf.timeInput}. Skipping this entry.`);
         continue;
@@ -59,13 +60,15 @@ const CsvPredictorContainer: React.FC = () => {
       }
 
       const userTimeInSeconds = timeToSeconds(perf.timeInput);
-      if (userTimeInSeconds === null || userTimeInSeconds <= 0) {
-        toast.warning(`Invalid time value for "${pastRaceDetails.name}": ${perf.timeInput}. Skipping this entry.`);
+      // timeToSeconds now returns null for invalid, so validateHhMmSs check above is primary.
+      // This check handles if time is zero or negative after successful parsing.
+      if (userTimeInSeconds === null || userTimeInSeconds <= 0) { 
+        toast.warning(`Invalid or non-positive time value for "${pastRaceDetails.name}": ${perf.timeInput}. Skipping this entry.`);
         continue;
       }
 
       if (pastRaceDetails.winnerTimeSeconds <= 0 || selectedTargetRace.winnerTimeSeconds <= 0) {
-          toast.warning(`Race data (winner times) is incomplete for "${pastRaceDetails.name}" or target race. Skipping prediction for this entry.`);
+          toast.warning(`Race data (winner times) is incomplete for "${pastRaceDetails.name}" or target race "${selectedTargetRace.name}". Skipping prediction for this entry.`);
           continue;
       }
 
@@ -75,7 +78,7 @@ const CsvPredictorContainer: React.FC = () => {
     }
 
     if (individualPredictionsSeconds.length === 0) {
-      toast.error("No valid past performances to make a prediction. Please check your entries.");
+      toast.error("No valid past performances to make a prediction. Please check your entries or race data.");
       setPredictionResult(null);
       setIsPredicting(false);
       return;
@@ -92,7 +95,7 @@ const CsvPredictorContainer: React.FC = () => {
       max: secondsToHhMmSs(maxSeconds),
       count: individualPredictionsSeconds.length,
     });
-    toast.success("Prediction successful!");
+    toast.success(`Prediction successful based on ${individualPredictionsSeconds.length} past performance(s)!`);
     setIsPredicting(false);
   };
   
@@ -112,10 +115,10 @@ const CsvPredictorContainer: React.FC = () => {
   const isPredictButtonDisabled = 
     isPredicting || 
     isLoadingRaces || 
-    races.length === 0 ||
+    races.length === 0 || // also implies raceSelectorItems.length === 0
     !selectedTargetRaceId || 
     pastPerformances.length === 0 || 
-    pastPerformances.every(p => !p.raceId || !p.timeInput);
+    pastPerformances.every(p => !p.raceId || !p.timeInput.trim()); // Check for empty time input too
 
   return (
     <PredictorLayout
@@ -139,7 +142,7 @@ const CsvPredictorContainer: React.FC = () => {
       isPredictButtonDisabled={isPredictButtonDisabled}
       PredictionResultComponent={
         predictionResult ? (
-          <PredictionResultCsv result={predictionResult} targetRaceName={selectedTargetRace?.name} />
+          <PredictionResultCsvDisplay result={predictionResult} targetRaceName={selectedTargetRace?.name} />
         ) : null
       }
       additionalBadges={

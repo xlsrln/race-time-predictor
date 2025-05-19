@@ -1,6 +1,5 @@
-
 import { useState, useEffect, useCallback } from 'react';
-import { fetchRaceNames } from '@/services/ratiosPredictorService';
+import { fetchRaceDataRatios, getRaceNamesRatios } from '@/services/ratiosPredictorService';
 import { SourceRaceEntryRatios } from '@/types/ratiosPredictor';
 import { toast } from 'sonner';
 
@@ -17,7 +16,8 @@ export function useRaceDataRatios() {
     const loadRaceNames = async () => {
       try {
         setIsLoading(true);
-        const names = await fetchRaceNames();
+        await fetchRaceDataRatios();
+        const names = getRaceNamesRatios();
         setRaceNames(names);
         setError(null);
       } catch (err) {

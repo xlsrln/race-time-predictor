@@ -50,3 +50,9 @@ export const parseCsvDurationToSeconds = (durationStr: string): number | null =>
   return timeToSeconds(timePart);
 };
 
+/**
+ * Validates if a time string is in "HH:MM" or "HH:MM:SS" format.
+ */
+export const validateHhMmSs = (timeStr: string): boolean => {
+  return timeToSeconds(timeStr) !== null;
+};
