@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import RacePredictorRatiosContainer from '@/components/ratios-predictor/RacePredictorRatiosContainer';
-import CsvPredictorContainer from '@/components/csv-predictor/CsvPredictorContainer';
+import RacePredictorRatiosContainer from '@/components/runner-in-common-predictor/RacePredictorRatiosContainer';
+import CsvPredictorContainer from '@/components/simple-time-predictor/CsvPredictorContainer';
 
 const Index = () => {
   const [activeMode, setActiveMode] = useState<'ratios' | 'csv'>('ratios');
