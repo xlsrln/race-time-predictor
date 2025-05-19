@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -5,6 +6,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import RacePredictorRatiosContainer from '@/components/ratios-predictor/RacePredictorRatiosContainer';
 import RaceSelector, { RaceSelectorItem } from '@/components/shared/RaceSelector';
+import Papa from 'papaparse'; // Added import for Papa
+import { useQuery } from '@tanstack/react-query'; // Added import for useQuery
+import { toast } from 'sonner'; // Added import for toast
+import { X } from 'lucide-react'; // Added import for X icon
+import { Race } from '@/types/race'; // Added import for Race type
+import { timeToSeconds, secondsToHhMmSs, parseCsvDurationToSeconds } from '@/lib/timeUtils'; // Added imports for time utils
 
 // CSV URL for "CSV Predictor"
 const CSV_URL = 'https://raw.githubusercontent.com/xlsrln/urtp/main/all_eu_wintimes.csv';
@@ -104,6 +111,11 @@ const Index = () => {
 
   const raceSelectorItemsCsv = useMemo(() => races.map(r => ({ id: r.id, name: r.name })), [races]);
 
+  const selectedTargetRace = useMemo(() => {
+    if (!selectedTargetRaceId) return null;
+    return races.find(r => r.id === selectedTargetRaceId) || null;
+  }, [selectedTargetRaceId, races]);
+
   const addPastPerformanceEntry = () => {
     setPastPerformances(prev => [...prev, { id: Date.now().toString(), raceId: null, timeInput: '' }]);
   };
@@ -133,7 +145,7 @@ const Index = () => {
       setPredictionResult(null);
       return;
     }
-    if (!selectedTargetRace) {
+    if (!selectedTargetRace) { // Corrected: use derived selectedTargetRace
       toast.error("Please select a target race.");
       setPredictionResult(null);
       return;
@@ -157,13 +169,13 @@ const Index = () => {
         continue;
       }
 
-      if (pastRaceDetails.winnerTimeSeconds <= 0 || selectedTargetRace.winnerTimeSeconds <= 0) {
+      if (!selectedTargetRace || pastRaceDetails.winnerTimeSeconds <= 0 || selectedTargetRace.winnerTimeSeconds <= 0) { // Corrected: use derived selectedTargetRace
           toast.warning(`Race data is incomplete for "${pastRaceDetails.name}" or target race. Skipping prediction for this entry.`);
           continue;
       }
 
       const predictionFactor = userTimeInSeconds / pastRaceDetails.winnerTimeSeconds;
-      const predictedTimeInSeconds = selectedTargetRace.winnerTimeSeconds * predictionFactor;
+      const predictedTimeInSeconds = selectedTargetRace.winnerTimeSeconds * predictionFactor; // Corrected: use derived selectedTargetRace
       individualPredictionsSeconds.push(predictedTimeInSeconds);
     }
 
@@ -291,7 +303,7 @@ const Index = () => {
                     Target Race
                   </label>
                   <RaceSelector
-                    selectedValue={selectedTargetRace ? { id: selectedTargetRace.id, name: selectedTargetRace.name } : undefined}
+                    selectedValue={selectedTargetRace ? { id: selectedTargetRace.id, name: selectedTargetRace.name } : undefined} // Corrected
                     onSelectValue={setSelectedTargetRaceId}
                     placeholder="Select your target race"
                     items={raceSelectorItemsCsv}
@@ -310,7 +322,7 @@ const Index = () => {
 
               {predictionResult && (
                 <CardFooter className="flex flex-col items-center justify-center pt-6 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Predicted Time for {selectedTargetRace?.name}:</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Predicted Time for {selectedTargetRace?.name}:</p> {/* Corrected */}
                   {predictionResult.count === 1 ? (
                     <div>
                       <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{predictionResult.average}</p>
@@ -346,3 +358,4 @@ const Index = () => {
 };
 
 export default Index;
+
