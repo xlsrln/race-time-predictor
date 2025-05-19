@@ -34,7 +34,7 @@ const SourceRaceFormRatios: React.FC<SourceRaceFormRatiosProps> = ({
               <Label htmlFor={`sourceRaceRatios-${index}`} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Source Race #{index + 1}
               </Label>
-              {sourceRaces.length > 0 && ( // Keep > 0, as removeSourceRace might prevent it from being empty if it has a minimum of 1. If it can be 0, this is fine.
+              {sourceRaces.length > 0 && (
                 <Button 
                   type="button" 
                   variant="ghost" 
@@ -63,7 +63,7 @@ const SourceRaceFormRatios: React.FC<SourceRaceFormRatiosProps> = ({
                 />
               </div>
               
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 md:flex-none md:w-72 min-w-0"> {/* Adjusted width for time input */}
                 <Input 
                   id={`sourceTimeRatios-${index}`} 
                   placeholder="e.g., 03:45:30 (HH:MM:SS)"
