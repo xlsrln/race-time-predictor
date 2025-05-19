@@ -58,7 +58,7 @@ const RacePredictorRatiosContainer: React.FC = () => {
 
   return (
     <PredictorLayout
-      pageDescription="Compares the times of people who have done both races, and applies that ratio to your time. Contains most ultra races in Sweden."
+      pageDescription="Compares the times of people who have done both races, and applies that ratio to your time. Contains most ultra races in Sweden. Can't find your race? Try the toggle below to try the simpler prediction mode."
       isLoadingInitialData={isLoadingRaceData}
       initialDataError={raceDataError}
       initialDataLoadingMessage="Loading race data for Common Runner Model..."
