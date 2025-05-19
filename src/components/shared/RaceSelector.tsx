@@ -35,7 +35,7 @@ const RaceSelector: React.FC<RaceSelectorProps> = ({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between text-sm md:text-base border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+          className="w-full justify-between text-sm md:text-base bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
           disabled={disabled || items.length === 0}
         >
           {selectedValue ? selectedValue.name : placeholder}

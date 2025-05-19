@@ -14,7 +14,8 @@ const PredictionResultRatios: React.FC<PredictionResultRatiosProps> = ({
   const renderPredictionSection = (title: string, data: PredictionResultDisplayRatios | string | undefined, _isPrimary: boolean = false) => {
     if (!data) return null;
 
-    const containerClasses = `p-4 border rounded-lg bg-muted/50 dark:bg-muted/20 mt-4`; // isPrimary mt-0 removed as CardHeader provides top spacing
+    // Use bg-white for light mode and dark:bg-gray-800 for dark mode, similar to Card components
+    const containerClasses = `p-4 border rounded-lg bg-white dark:bg-gray-800 mt-4`; 
 
     if (typeof data === 'string') { // Error or info message
       return (
