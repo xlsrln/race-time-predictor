@@ -109,7 +109,7 @@ const CsvPredictorContainer: React.FC = () => {
     onRemoveEntry: removePastPerformanceEntry,
     isLoading: isLoadingRaces || isPredicting,
     racePlaceholderPrefix: "Past Race",
-    timeInputPlaceholder: "HH:MM:SS (Your Time)"
+    timeInputPlaceholder: "HH:MM"
   };
 
   const isPredictButtonDisabled = 
