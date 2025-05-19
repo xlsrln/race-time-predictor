@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+// Removed Label import as it's no longer used directly in the new layout
 import { X } from "lucide-react";
 import { SourceRaceEntryRatios } from '@/types/ratiosPredictor';
 import RaceSelector, { RaceSelectorItem } from '@/components/shared/RaceSelector';
@@ -24,68 +24,64 @@ const SourceRaceFormRatios: React.FC<SourceRaceFormRatiosProps> = ({
 }) => {
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-3">Races you've completed</h3>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200">Races you've completed</h3>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={addSourceRace}
+          className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-400/20 px-3 py-1 text-sm"
+        >
+          Add Race
+        </Button>
+      </div>
       
       {sourceRaces.map((entry, index) => {
         const selectedRaceItem = entry.race ? raceSelectorItems.find(item => item.id === entry.race) : undefined;
         return (
-          <div key={index} className="space-y-3 p-3 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700/50 relative">
-            <div className="flex justify-between items-center mb-1">
-              <Label htmlFor={`sourceRaceRatios-${index}`} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Source Race #{index + 1}
-              </Label>
-              {sourceRaces.length > 0 && (
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => removeSourceRace(index)}
-                  className="text-red-500 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-500/20 p-1 h-auto w-auto"
-                  aria-label={`Remove race ${index + 1}`}
-                >
-                  <X size={16} />
-                </Button>
-              )}
+          <div key={index} className="flex items-center space-x-2 mb-3">
+            <div className="flex-1 min-w-0">
+              <RaceSelector
+                selectedValue={selectedRaceItem}
+                onSelectValue={(value) => {
+                  if (value !== null) {
+                    updateSourceRace(index, 'race', value);
+                  }
+                }}
+                placeholder={`Source Race #${index + 1}`}
+                items={raceSelectorItems}
+                disabled={raceSelectorItems.length === 0}
+              />
             </div>
             
-            <div className="flex flex-col md:flex-row md:space-x-2 space-y-2 md:space-y-0">
-              <div className="flex-1 min-w-0">
-                <RaceSelector
-                  selectedValue={selectedRaceItem}
-                  onSelectValue={(value) => {
-                    if (value !== null) {
-                      updateSourceRace(index, 'race', value);
-                    }
-                  }}
-                  placeholder="Select race"
-                  items={raceSelectorItems}
-                  disabled={raceSelectorItems.length === 0}
-                />
-              </div>
-              
-              <div className="flex-1 md:flex-none md:w-72 min-w-0"> {/* Adjusted width for time input */}
-                <Input 
-                  id={`sourceTimeRatios-${index}`} 
-                  placeholder="e.g., 03:45:30 (HH:MM:SS)"
-                  value={entry.time} 
-                  onChange={(e) => updateSourceRace(index, 'time', e.target.value)} 
-                  className="w-full bg-white dark:bg-gray-700 dark:border-gray-600"
-                />
-              </div>
+            <div className="flex-none w-40 min-w-0">
+              <Input 
+                id={`sourceTimeRatios-${index}`} 
+                placeholder="HH:MM:SS"
+                value={entry.time} 
+                onChange={(e) => updateSourceRace(index, 'time', e.target.value)} 
+                className="w-full bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
+              />
             </div>
+            <Button 
+              type="button" 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => removeSourceRace(index)}
+              className="text-red-500 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-500/20 p-1"
+              aria-label={`Remove race ${index + 1}`}
+            >
+              <X size={18} />
+            </Button>
           </div>
         );
       })}
-      <Button 
-        type="button" 
-        variant="outline" 
-        onClick={addSourceRace}
-        className="w-full mt-2 border-blue-500 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-400/20"
-      >
-        Add Another Race
-      </Button>
+      {/* The "Add Another Race" button was moved up, so this original position is removed. 
+          If sourceRaces can be empty and we want a prominent "Add Race" button initially, 
+          we might need a different strategy, but for now, it's consistent with CsvPredictor. */}
     </div>
   );
 };
 
 export default SourceRaceFormRatios;
+
