@@ -21,7 +21,7 @@ const TargetRaceSelectorCsv: React.FC<TargetRaceSelectorCsvProps> = ({
 
   return (
     <div className="space-y-2">
-      <label htmlFor="target-race-csv" className="text-base font-semibold">Race you want to predict</Label>
+      <label htmlFor="target-race-csv" className="text-base font-semibold">Race you want to predict</label>
       <RaceSelector
         selectedValue={selectedValue}
         onSelectValue={onSelectValue}
