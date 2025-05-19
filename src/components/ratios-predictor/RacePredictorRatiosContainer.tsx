@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardDescription, CardFooter } from "@/components/ui/card";
@@ -12,6 +11,7 @@ import LoadingStateRatios from './LoadingStateRatios';
 
 import { useRaceDataRatios } from '@/hooks/ratios-predictor/useRaceDataRatios';
 import { usePredictionRatios } from '@/hooks/ratios-predictor/usePredictionRatios';
+import { RaceSelectorItem } from '@/components/shared/RaceSelector'; // Added import
 
 const RacePredictorRatiosContainer: React.FC = () => {
   const {
@@ -27,6 +27,11 @@ const RacePredictorRatiosContainer: React.FC = () => {
   } = useRaceDataRatios();
   
   const { predictedResult, handlePrediction } = usePredictionRatios();
+
+  const raceSelectorItemsForSource: RaceSelectorItem[] = React.useMemo(() => 
+    raceNames.map(name => ({ id: name, name: name })),
+    [raceNames]
+  );
   
   const onPredictClick = () => {
     // Basic validation before calling hook
@@ -54,10 +59,10 @@ const RacePredictorRatiosContainer: React.FC = () => {
           <>
             <SourceRaceFormRatios
               sourceRaces={sourceRaces}
-              raceNames={raceNames}
+              raceSelectorItems={raceSelectorItemsForSource} // Changed from raceNames
               updateSourceRace={updateSourceRace}
               addSourceRace={addSourceRace}
-              removeSourceRace={removeSourceRace}
+              removeSourceRaces={removeSourceRace} // Corrected prop name to match component
             />
             
             <div className="flex items-center justify-center my-4">
@@ -67,7 +72,7 @@ const RacePredictorRatiosContainer: React.FC = () => {
             <TargetRaceSelectorRatios
               targetRace={targetRace}
               setTargetRace={setTargetRace}
-              raceNames={raceNames}
+              raceNames={raceNames} // TargetRaceSelectorRatios still uses raceNames
             />
             
             <Button 
