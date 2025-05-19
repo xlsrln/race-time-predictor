@@ -45,8 +45,8 @@ const RacePredictorRatiosContainer: React.FC = () => {
     onAddEntry: addSourceRace,
     onRemoveEntry: removeSourceRace,
     isLoading: isLoadingRaceData || isPredicting,
-    racePlaceholderPrefix: "Source Race",
-    timeInputPlaceholder: "HH:MM:SS"
+    racePlaceholderPrefix: "Past Race",
+    timeInputPlaceholder: "HH:MM"
   };
   
   const isPredictButtonDisabled = 
