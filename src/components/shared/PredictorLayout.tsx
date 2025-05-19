@@ -1,15 +1,14 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import GenericSourceRacesForm, { GenericSourceRacesFormProps } from './GenericSourceRacesForm'; // Ensure correct path
+import GenericSourceRacesForm, { GenericSourceRacesFormProps } from './GenericSourceRacesForm'; // Import confirmed
 
 interface PredictorLayoutProps {
   pageDescription: React.ReactNode;
   
   isLoadingInitialData: boolean;
-  initialDataError?: any; // Using any for broader compatibility with error types from hooks
+  initialDataError?: any; 
   initialDataLoadingMessage?: string;
   initialDataErrorMessage?: string;
   noDataAvailableMessage?: string;
@@ -48,12 +47,14 @@ const PredictorLayout: React.FC<PredictorLayoutProps> = ({
 }) => {
   
   const showContent = !isLoadingInitialData && !initialDataError;
-  const showNoDataMessage = !isLoadingInitialData && !initialDataError && sourceRacesFormProps.raceSelectorItems.length === 0;
+  // Ensure raceSelectorItems is checked for length if it's the basis for "no data"
+  const noDataBasedOnItems = sourceRacesFormProps.raceSelectorItems && sourceRacesFormProps.raceSelectorItems.length === 0;
+  const showNoDataMessage = !isLoadingInitialData && !initialDataError && noDataBasedOnItems;
 
   return (
     <Card className="w-full max-w-3xl shadow-xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
       <CardHeader>
-        <CardDescription className="text-center text-gray-600 dark:text-gray-400">
+        <CardDescription className="text-center text-gray-600 dark:text-gray-400 text-base">
           {pageDescription}
         </CardDescription>
       </CardHeader>
@@ -94,7 +95,7 @@ const PredictorLayout: React.FC<PredictorLayoutProps> = ({
             <Button 
               className="w-full mt-6 py-3 text-base font-semibold bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-500 dark:hover:bg-indigo-600" 
               onClick={onPredict}
-              disabled={isPredictButtonDisabled}
+              disabled={isPredictButtonDisabled || isLoadingInitialData} // Disable predict button also if initial data is loading
             >
               {predictButtonText}
             </Button>

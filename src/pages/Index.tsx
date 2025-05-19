@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import RacePredictorRatiosContainer from '@/components/ratios-predictor/RacePredictorRatiosContainer';
-import CsvPredictor from '@/components/csv-predictor/CsvPredictor'; // New import
+import CsvPredictorContainer from '@/components/csv-predictor/CsvPredictorContainer'; // Updated import
 
 const Index = () => {
   const [activeMode, setActiveMode] = useState<'ratios' | 'csv'>('ratios');
@@ -13,11 +13,9 @@ const Index = () => {
         Ultra Race Time Predictor
       </h1>
       
-      {/* Content for activeMode */}
-      {activeMode === 'csv' && <CsvPredictor />}
+      {activeMode === 'csv' && <CsvPredictorContainer />}
       {activeMode === 'ratios' && <RacePredictorRatiosContainer />}
 
-      {/* ToggleGroup moved below the content cards */}
       <div className="w-full max-w-xs sm:max-w-sm md:max-w-md mt-8 mb-6">
         <ToggleGroup 
           type="single" 
@@ -38,4 +36,3 @@ const Index = () => {
 };
 
 export default Index;
-

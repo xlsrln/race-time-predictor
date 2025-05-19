@@ -11,7 +11,7 @@ export interface GenericRaceEntry {
   time: string;
 }
 
-interface GenericSourceRacesFormProps {
+export interface GenericSourceRacesFormProps { // Ensured export
   formTitle: string;
   entries: GenericRaceEntry[];
   raceSelectorItems: RaceSelectorItem[];
@@ -21,6 +21,7 @@ interface GenericSourceRacesFormProps {
   onRemoveEntry: (entryId: string) => void;
   racePlaceholderPrefix?: string;
   isLoading?: boolean;
+  timeInputPlaceholder?: string;
 }
 
 const GenericSourceRacesForm: React.FC<GenericSourceRacesFormProps> = ({
@@ -33,6 +34,7 @@ const GenericSourceRacesForm: React.FC<GenericSourceRacesFormProps> = ({
   onRemoveEntry,
   racePlaceholderPrefix = "Source Race",
   isLoading = false,
+  timeInputPlaceholder = "HH:MM:SS",
 }) => {
   return (
     <div>
@@ -63,10 +65,10 @@ const GenericSourceRacesForm: React.FC<GenericSourceRacesFormProps> = ({
               />
             </div>
             
-            <div className="flex-none w-40 min-w-0"> {/* Standardized width */}
+            <div className="flex-none w-40 min-w-0">
               <Input 
                 id={`sourceTime-${entry.id}`} 
-                placeholder="HH:MM:SS"
+                placeholder={timeInputPlaceholder}
                 value={entry.time} 
                 onChange={(e) => onUpdateEntryTime(entry.id, e.target.value)} 
                 className="w-full bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
