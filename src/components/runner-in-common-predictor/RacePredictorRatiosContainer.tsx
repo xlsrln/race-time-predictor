@@ -86,7 +86,7 @@ const RacePredictorRatiosContainer: React.FC = () => {
           Comparison based on runners in common
         </Badge>
       }
-      footerPrimaryText="Conditions and courses vary year to year. Use as an indication only."
+      footerPrimaryText="Times from DUV. Conditions and courses vary year to year. Use as an indication only."
       footerSecondaryText="by axel sarlin"
     />
   );

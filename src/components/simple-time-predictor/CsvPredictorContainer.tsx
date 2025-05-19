@@ -150,7 +150,7 @@ const CsvPredictorContainer: React.FC = () => {
           Comparison based on winner times
         </Badge>
       }
-      footerPrimaryText="Conditions and courses vary year to year. Use as an indication only."
+      footerPrimaryText="Times from DUV. Conditions and courses vary year to year. Use as an indication only."
       footerSecondaryText="by axel sarlin"
     />
   );
