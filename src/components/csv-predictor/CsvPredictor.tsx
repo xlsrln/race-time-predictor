@@ -259,10 +259,10 @@ const CsvPredictor: React.FC = () => {
                       disabled={isLoadingRaces || races.length === 0}
                     />
                   </div>
-                  <div className="flex-1 md:flex-none md:w-72 min-w-0">
+                  <div className="flex-1 md:flex-none md:w-56 min-w-0">
                     <Input
                       type="text"
-                      placeholder="e.g., 03:45:30 (HH:MM:SS)"
+                      placeholder="e.g., 03:45:30"
                       value={perf.timeInput}
                       onChange={(e) => updatePastPerformanceTime(perf.id, e.target.value)}
                       className="w-full bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"

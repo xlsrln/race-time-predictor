@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -38,15 +37,15 @@ const RaceSelector: React.FC<RaceSelectorProps> = ({
           className="w-full justify-between text-sm md:text-base bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
           disabled={disabled || items.length === 0}
         >
-          <span className="truncate block flex-1 text-left"> {/* Added truncate and text-left for proper alignment */}
+          <span className="truncate block flex-1 text-left">
             {selectedValue ? selectedValue.name : placeholder}
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="min-w-[var(--radix-popover-trigger-width)] w-[320px] max-h-[--radix-popover-content-available-height] p-0 bg-white border-gray-300 dark:bg-gray-800 dark:border-gray-600" /* Adjusted width */
-        align="start" /* Ensures popover aligns with the start of the trigger */
+        className="min-w-[var(--radix-popover-trigger-width)] w-[420px] max-h-[--radix-popover-content-available-height] p-0 bg-white border-gray-300 dark:bg-gray-800 dark:border-gray-600"
+        align="start"
       >
         <Command>
           <CommandInput placeholder="Search race..." className="border-gray-300 text-gray-900 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400" />
@@ -56,7 +55,7 @@ const RaceSelector: React.FC<RaceSelectorProps> = ({
               {items.map((item) => (
                 <CommandItem
                   key={item.id}
-                  value={item.name} // Value for search
+                  value={item.name} 
                   onSelect={() => {
                     onSelectValue(item.id);
                     setOpen(false);
@@ -69,7 +68,7 @@ const RaceSelector: React.FC<RaceSelectorProps> = ({
                       selectedValue?.id === item.id ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  <span className="truncate">{item.name}</span> {/* Also truncate items in the list if they are too long */}
+                  <span className="truncate">{item.name}</span>
                 </CommandItem>
               ))}
             </CommandGroup>
