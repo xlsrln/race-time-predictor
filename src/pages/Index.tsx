@@ -300,7 +300,7 @@ const Index = () => {
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 text-base dark:bg-blue-500 dark:hover:bg-blue-600"
                   disabled={isLoadingRaces || races.length === 0}
                 >
-                  Predict My Time (Winner Time Model)
+                  Predict My Time
                 </Button>
               </CardContent>
 
@@ -332,7 +332,7 @@ const Index = () => {
               
               <CardFooter className="text-xs text-center text-muted-foreground dark:text-gray-500 flex flex-col justify-center gap-2 py-4 border-t border-gray-200 dark:border-gray-700">
                 <p>Conditions and routes can vary. Use as an indication only.</p>
-                <p className="pt-2 text-xs font-medium">Winner Time Model by Axel Sarlin</p>
+                <p className="pt-2 text-xs font-medium">by axel sarlin</p>
               </CardFooter>
             </Card>
           )}
