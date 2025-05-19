@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -104,7 +103,7 @@ const Index = () => {
     { id: Date.now().toString(), raceId: null, timeInput: '' }
   ]);
   const [selectedTargetRaceId, setSelectedTargetRaceId] = useState<string | null>(null);
-  const [predictionResult, setPredictionResult] = useState<{ average: string; min: string; max: string; } | null>(null);
+  const [predictionResult, setPredictionResult] = useState<{ average: string; min: string; max: string; count: number; } | null>(null); // Added count
   
   const [targetRacePopoverOpen, setTargetRacePopoverOpen] = useState(false);
 
@@ -149,23 +148,22 @@ const Index = () => {
 
     for (const perf of pastPerformances) {
       if (!perf.raceId || !perf.timeInput) {
-        // Silently skip incomplete entries if some are complete, error shown if all are incomplete by above check
         continue; 
       }
       const pastRaceDetails = races.find(r => r.id === perf.raceId);
       if (!pastRaceDetails) {
-        toast.warn(`Could not find details for a past race. Skipping this entry.`);
+        toast.warning(`Could not find details for a past race. Skipping this entry.`);
         continue;
       }
 
       const userTimeInSeconds = timeToSeconds(perf.timeInput);
       if (userTimeInSeconds === null || userTimeInSeconds <= 0) {
-        toast.warn(`Invalid time format for "${pastRaceDetails.name}": ${perf.timeInput}. Skipping this entry.`);
+        toast.warning(`Invalid time format for "${pastRaceDetails.name}": ${perf.timeInput}. Skipping this entry.`);
         continue;
       }
 
       if (pastRaceDetails.winnerTimeSeconds <= 0 || selectedTargetRace.winnerTimeSeconds <= 0) {
-          toast.warn(`Race data is incomplete for "${pastRaceDetails.name}" or target race. Skipping prediction for this entry.`);
+          toast.warning(`Race data is incomplete for "${pastRaceDetails.name}" or target race. Skipping prediction for this entry.`);
           continue;
       }
 
@@ -189,6 +187,7 @@ const Index = () => {
       average: secondsToHhMmSs(averageSeconds),
       min: secondsToHhMmSs(minSeconds),
       max: secondsToHhMmSs(maxSeconds),
+      count: individualPredictionsSeconds.length, // Store the count
     });
     toast.success("Prediction successful!");
   };
@@ -363,20 +362,26 @@ const Index = () => {
         {predictionResult && (
           <CardFooter className="flex flex-col items-center justify-center pt-6 border-t border-gray-200"> {/* Light theme */}
             <p className="text-sm text-gray-600 mb-1">Predicted Time for {selectedTargetRace?.name}:</p> {/* Light theme */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center w-full">
+            {predictionResult.count === 1 ? (
               <div>
-                <p className="text-xs text-gray-500">MIN</p>
-                <p className="text-2xl font-semibold text-blue-500">{predictionResult.min}</p> {/* Light theme */}
+                <p className="text-3xl font-bold text-blue-600">{predictionResult.average}</p>
               </div>
-              <div>
-                <p className="text-xs text-gray-500">AVERAGE</p>
-                <p className="text-3xl font-bold text-blue-600">{predictionResult.average}</p> {/* Light theme */}
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center w-full">
+                <div>
+                  <p className="text-xs text-gray-500">MIN</p>
+                  <p className="text-2xl font-semibold text-blue-500">{predictionResult.min}</p> {/* Light theme */}
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">AVERAGE</p>
+                  <p className="text-3xl font-bold text-blue-600">{predictionResult.average}</p> {/* Light theme */}
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">MAX</p>
+                  <p className="text-2xl font-semibold text-blue-500">{predictionResult.max}</p> {/* Light theme */}
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-gray-500">MAX</p>
-                <p className="text-2xl font-semibold text-blue-500">{predictionResult.max}</p> {/* Light theme */}
-              </div>
-            </div>
+            )}
           </CardFooter>
         )}
       </Card>
@@ -385,4 +390,3 @@ const Index = () => {
 };
 
 export default Index;
-
